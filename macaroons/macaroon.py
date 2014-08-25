@@ -13,19 +13,19 @@ class Macaroon:
                  location=None,
                  identifier=None,
                  key=None,
-                 bytes=None):
-        self._bytes = bytes
+                 serialized=None):
+        self._serialized = serialized
         self._caveats = []
-        # TODO: validations, only loc, id, key or bytes
+        # TODO: validations, only (loc, id, key) or serialized
         if location and identifier and key:
             self._location = location
             self._identifier = identifier
             self._key = key
             self._signature = self._create_initial_macaroon_signature()
-            self._bytes = None
-        elif self._bytes:
-            # TODO
-            pass
+            self._serialized = None
+        elif serialized:
+            self._serialized = serialized
+            self._deserialize(serialized)
         else:
             # TODO
             pass
@@ -73,22 +73,45 @@ class Macaroon:
         )
         return base64.urlsafe_b64encode(combined)
 
-    # TODO: pack using python struct
-    def _packetize(self, key, data):
-        PACKET_PREFIX_LENGTH = 4
-        # The 2 covers the space and the newline
-        packet_size = PACKET_PREFIX_LENGTH + 2 + len(key) + len(data)
-        # Ignore the first two chars, 0x
-        packet_size_hex = hex(packet_size)[2:]
-        header = packet_size_hex.zfill(4)
-        packet = header + key + ' ' + data + '\n'
-        return packet
-
     def serialize_json(self):
         pass
 
+    # TODO: use python struct unpacking
+    def _deserialize(self, data):
+        PACKET_PREFIX_LENGTH = 4
+        decoded = base64.urlsafe_b64decode(data)
+        lines = decoded.split('\n')
+        # location
+        self._location = lines[0][PACKET_PREFIX_LENGTH + len('location '):]
+        # identifier
+        self._identifier = lines[1][PACKET_PREFIX_LENGTH + len('identifier '):]
+        # caveats
+        for i in range(2, len(lines) - 2):
+            cid = lines[i][PACKET_PREFIX_LENGTH+len('cid '):]
+            self.caveats.append(Caveat(caveatId=cid))
+            # TODO: vid and cl
+
+        # signature
+        self._signature = \
+            binascii.hexlify(
+                lines[len(lines) - 2][PACKET_PREFIX_LENGTH+len('signature '):]
+            )
+        return self
+
     def inspect(self):
-        pass
+        combined = 'location' + ' ' + self.location + '\n'
+        combined += 'identifier' + ' ' + self.identifier + '\n'
+
+        # TODO: list comprehension
+        for caveat in self.caveats:
+            combined += 'cid' + ' ' + caveat.caveatId + '\n'
+
+            if caveat.verificationKeyId and caveat.location:
+                combined += 'vid' + ' ' + caveat.verificationKeyId + '\n'
+                combined += 'cl' + ' ' + caveat.location + '\n'
+
+        combined += 'signature' + ' ' + self.signature
+        return combined
 
     # TODO
     def is_same(self, macaroon):
@@ -138,3 +161,15 @@ class Macaroon:
             digestmod=hashlib.sha256
         ).digest()
         return binascii.hexlify(dig)
+
+    # TODO: pack using python struct
+    # http://stackoverflow.com/questions/9566061/unspecified-byte-lengths-in-python
+    def _packetize(self, key, data):
+        PACKET_PREFIX_LENGTH = 4
+        # The 2 covers the space and the newline
+        packet_size = PACKET_PREFIX_LENGTH + 2 + len(key) + len(data)
+        # Ignore the first two chars, 0x
+        packet_size_hex = hex(packet_size)[2:]
+        header = packet_size_hex.zfill(4)
+        packet = header + key + ' ' + data + '\n'
+        return packet

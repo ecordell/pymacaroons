@@ -50,3 +50,15 @@ pymacaroons:
     m = Macaroon(location='http://mybank/', identifier='we used our secret key', key='this is our super secret key; only we should know it')
     m.add_first_party_caveat('test = caveat')
     m.serialize()
+    'MDAxY2xvY2F0aW9uIGh0dHA6Ly9teWJhbmsvCjAwMjZpZGVudGlmaWVyIHdlIHVzZWQgb3VyIHNlY3JldCBrZXkKMDAxNmNpZCB0ZXN0ID0gY2F2ZWF0CjAwMmZzaWduYXR1cmUgGXusegRK8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'
+
+Deserializing
+
+    from macaroons.macaroon import Macaroon
+    m = Macaroon(serialized='MDAxY2xvY2F0aW9uIGh0dHA6Ly9teWJhbmsvCjAwMjZpZGVudGlmaWVyIHdlIHVzZWQgb3VyIHNlY3JldCBrZXkKMDAxNmNpZCB0ZXN0ID0gY2F2ZWF0CjAwMmZzaWduYXR1cmUgGXusegRK8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK')
+    print(m.inspect())
+    location http://mybank/
+    identifier we used our secret key
+    cid test = caveat
+    signature 197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67
+
