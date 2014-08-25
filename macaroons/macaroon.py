@@ -1,7 +1,8 @@
 import hmac
 import hashlib
-import base64
 import binascii
+
+from caveat import Caveat
 
 
 class Macaroon:
@@ -13,6 +14,7 @@ class Macaroon:
                  key=None,
                  bytes=None):
         self._bytes = bytes
+        self._caveats = []
         # TODO: validations, only loc, id, key or bytes
         if location and identifier and key:
             self._location = location
@@ -63,51 +65,44 @@ class Macaroon:
     def third_party_caveats(self):
         pass
 
-    # TODO?
+    # TODO (only needed for third party)
     def prepare_for_request(self, macaroon):
         pass
 
-    # TODO
+    # The existing macaroon signature is the key for hashing the
+    # caveat being added. This new hash becomes the signature of
+    # the macaroon with caveat added.
     def add_first_party_caveat(self, predicate):
-        pass
+        caveat = Caveat(caveatId=predicate)
+        self._caveats.append(caveat)
+        encode_key = binascii.unhexlify(self._signature)
+        self._signature = self._macaroon_hmac(encode_key, predicate)
+        return self
 
+    # TODO
     def add_third_party_caveat(self,
-                               _location,
-                               _key,
-                               _key_id):
+                               location,
+                               key,
+                               key_id):
         pass
 
     # Given a high-entropy root key _key and an identifier id, the function
     # _create_initial_macaroon_signature(_location, _identifier, _key) returns
     # valid signature  sig = MAC(k, id).
     def _create_initial_macaroon_signature(self):
-        return self._macaroon_hmac(self._key, self._identifier)
-
-    def _macaroon_hmac(self, key, data):
         generator_key = b'macaroons-key-generator'
         derived_key = hmac.new(
             generator_key,
-            msg=key.encode('ascii'),
+            msg=self._key.encode('ascii'),
             digestmod=hashlib.sha256
         ).digest()
+        return self._macaroon_hmac(derived_key, self._identifier)
+
+    # key should be unhexlified, data is a string
+    def _macaroon_hmac(self, key, data):
         dig = hmac.new(
-            derived_key,
+            key,
             msg=data.encode('ascii'),
             digestmod=hashlib.sha256
         ).digest()
         return binascii.hexlify(dig)
-
-
-    def _add_caveat_helper(self):
-       pass
-
-    # TODO: no longer needed?
-    def _truncate_or_pad(self, byte_string):
-        byte_array = bytearray(byte_string)
-        length = len(byte_array)
-        if length > 32:
-            return bytes(byte_array[:32])
-        elif length < 32:
-            return bytes(byte_array + b"\0"*(32-length))
-        else:
-            return byte_string
