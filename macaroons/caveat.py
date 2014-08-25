@@ -1,7 +1,3 @@
-# TODO: move into configuration
-default_location = 'local'
-
-
 class Caveat:
 
     def __init__(self,
@@ -11,7 +7,7 @@ class Caveat:
         # TODO: raise exceptions for invalid init values
         self._caveatId = caveatId
         self._verificationKeyId = verificationKeyId
-        self._location = location or None
+        self._location = location
 
     @property
     def caveatId(self):

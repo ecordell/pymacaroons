@@ -32,3 +32,21 @@ pymacaroons:
     m.add_first_party_caveat('test = caveat')
     m.signature
     '197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67'
+
+
+Serializing
+
+libmacaroons:
+
+    import macaroons
+    m = macaroons.create('http://mybank/', 'this is our super secret key; only we should know it', 'we used our secret key')
+    m = m.add_first_party_caveat('test = caveat')
+    m.serialize()
+    'MDAxY2xvY2F0aW9uIGh0dHA6Ly9teWJhbmsvCjAwMjZpZGVudGlmaWVyIHdlIHVzZWQgb3VyIHNlY3JldCBrZXkKMDAxNmNpZCB0ZXN0ID0gY2F2ZWF0CjAwMmZzaWduYXR1cmUgGXusegRK8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'
+
+pymacaroons:
+
+    from macaroons.macaroon import Macaroon
+    m = Macaroon(location='http://mybank/', identifier='we used our secret key', key='this is our super secret key; only we should know it')
+    m.add_first_party_caveat('test = caveat')
+    m.serialize()

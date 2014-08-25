@@ -1,6 +1,7 @@
 import hmac
 import hashlib
 import binascii
+import base64
 
 from caveat import Caveat
 
@@ -41,6 +42,10 @@ class Macaroon:
     def signature(self):
         return self._signature
 
+    @property
+    def caveats(self):
+        return self._caveats
+
     # TODO
     def validate(self):
         pass
@@ -48,9 +53,36 @@ class Macaroon:
     def copy(self):
         pass
 
-    # TODO
+    # Concatenates location, id, all caveats, and signature,
+    # and then base64 encodes them
     def serialize(self):
-        pass
+        combined = self._packetize('location', self.location)
+        combined += self._packetize('identifier', self.identifier)
+
+        # TODO: list comprehension
+        for caveat in self.caveats:
+            combined += self._packetize('cid', caveat.caveatId)
+
+            if caveat.verificationKeyId and caveat.location:
+                combined += self._packetize('vid', caveat.verificationKeyId)
+                combined += self._packetize('cl', caveat.location)
+
+        combined += self._packetize(
+            'signature',
+            binascii.unhexlify(self.signature)
+        )
+        return base64.urlsafe_b64encode(combined)
+
+    # TODO: pack using python struct
+    def _packetize(self, key, data):
+        PACKET_PREFIX_LENGTH = 4
+        # The 2 covers the space and the newline
+        packet_size = PACKET_PREFIX_LENGTH + 2 + len(key) + len(data)
+        # Ignore the first two chars, 0x
+        packet_size_hex = hex(packet_size)[2:]
+        header = packet_size_hex.zfill(4)
+        packet = header + key + ' ' + data + '\n'
+        return packet
 
     def serialize_json(self):
         pass
@@ -75,8 +107,8 @@ class Macaroon:
     def add_first_party_caveat(self, predicate):
         caveat = Caveat(caveatId=predicate)
         self._caveats.append(caveat)
-        encode_key = binascii.unhexlify(self._signature)
-        self._signature = self._macaroon_hmac(encode_key, predicate)
+        encode_key = binascii.unhexlify(self.signature)
+        self.signature = self._macaroon_hmac(encode_key, predicate)
         return self
 
     # TODO
