@@ -3,7 +3,7 @@ import hashlib
 import binascii
 import base64
 
-from caveat import Caveat
+from .caveat import Caveat
 
 
 class Macaroon:
@@ -13,7 +13,8 @@ class Macaroon:
                  location=None,
                  identifier=None,
                  key=None,
-                 serialized=None):
+                 serialized=None,
+                 provider=None):
         self._serialized = serialized
         self._caveats = []
         # TODO: validations, only (loc, id, key) or serialized
@@ -117,6 +118,7 @@ class Macaroon:
     def is_same(self, macaroon):
         pass
 
+    # TODO
     def third_party_caveats(self):
         pass
 
@@ -131,7 +133,7 @@ class Macaroon:
         caveat = Caveat(caveatId=predicate)
         self._caveats.append(caveat)
         encode_key = binascii.unhexlify(self.signature)
-        self.signature = self._macaroon_hmac(encode_key, predicate)
+        self._signature = self._macaroon_hmac(encode_key, predicate)
         return self
 
     # TODO
@@ -160,7 +162,7 @@ class Macaroon:
             msg=data.encode('ascii'),
             digestmod=hashlib.sha256
         ).digest()
-        return binascii.hexlify(dig)
+        return binascii.hexlify(dig).decode('ascii')
 
     # TODO: pack using python struct
     # http://stackoverflow.com/questions/9566061/unspecified-byte-lengths-in-python
