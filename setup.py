@@ -20,7 +20,7 @@ setup(
     include_package_data=True,
     long_description=read('README.md'),
     install_requires=[
-        'pysodium>=0.6.3'
+        'six>=1.7.3'
     ],
     classifiers=[
         'Development Status :: 1 - Planning',

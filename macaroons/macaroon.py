@@ -1,7 +1,11 @@
+# from __future__ import unicode_literals
+
 import hmac
 import hashlib
 import binascii
 import base64
+import six
+
 
 from .caveat import Caveat
 
@@ -57,22 +61,22 @@ class Macaroon:
     # Concatenates location, id, all caveats, and signature,
     # and then base64 encodes them
     def serialize(self):
-        combined = self._packetize('location', self.location)
-        combined += self._packetize('identifier', self.identifier)
+        combined = self._packetize('location', self.location.encode('ascii'))
+        combined += self._packetize('identifier', self.identifier.encode('ascii'))
 
         # TODO: list comprehension
         for caveat in self.caveats:
-            combined += self._packetize('cid', caveat.caveatId)
+            combined += self._packetize('cid', caveat.caveatId.encode('ascii'))
 
             if caveat.verificationKeyId and caveat.location:
-                combined += self._packetize('vid', caveat.verificationKeyId)
-                combined += self._packetize('cl', caveat.location)
+                combined += self._packetize('vid', caveat.verificationKeyId.encode('ascii'))
+                combined += self._packetize('cl', caveat.location.encode('ascii'))
 
         combined += self._packetize(
             'signature',
             binascii.unhexlify(self.signature)
         )
-        return base64.urlsafe_b64encode(combined)
+        return base64.urlsafe_b64encode(combined).decode('ascii')
 
     def serialize_json(self):
         pass
@@ -162,7 +166,7 @@ class Macaroon:
             msg=data.encode('ascii'),
             digestmod=hashlib.sha256
         ).digest()
-        return binascii.hexlify(dig).decode('ascii')
+        return binascii.hexlify(dig)
 
     # TODO: pack using python struct
     # http://stackoverflow.com/questions/9566061/unspecified-byte-lengths-in-python
@@ -173,5 +177,5 @@ class Macaroon:
         # Ignore the first two chars, 0x
         packet_size_hex = hex(packet_size)[2:]
         header = packet_size_hex.zfill(4)
-        packet = header + key + ' ' + data + '\n'
+        packet = header.encode('ascii') + key.encode('ascii') + b' ' + data + b'\n'
         return packet
