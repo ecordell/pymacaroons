@@ -11,7 +11,10 @@ class Verifier:
         self.predicates.append(predicate)
 
     def satisfy_general(self, func):
-        pass
+        # TODO: validate func
+        # TODO: support more direct general caveats?
+        # for example matching on prefixes?
+        self.callbacks.append(func)
 
     def verify(self, macaroon, key, MS=None):
         compare_macaroon = Macaroon(
@@ -21,11 +24,19 @@ class Verifier:
         )
         # verify that first party caveats are met
         for caveat in macaroon.caveats:
-            if caveat.caveatId not in self.predicates:
-                print('Caveat not found. Invalid macaroon.')
-                return False
+            caveatMet = False
+
+            if caveat.caveatId in self.predicates:
+                caveatMet = True
             else:
+                for callback in self.callbacks:
+                    if callback(caveat.caveatId):
+                        caveatMet = True
+
+            if caveatMet:
                 compare_macaroon.add_first_party_caveat(caveat.caveatId)
+            else:
+                print('Caveat not met. Invalid macaroon.')
 
         # TODO: verify third party caveats
 

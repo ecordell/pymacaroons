@@ -64,7 +64,7 @@ Deserializing
     signature 197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67
 
 
-Verifying First Party:
+Verifying First Party Exact Caveats:
 
 pymacaroons:
 
@@ -77,31 +77,48 @@ pymacaroons:
     v.satisfy_exact('test = caveat')
     v.verify(m, 'this is our super secret key; only we should know it')
 
+Verifying First Party General Caveats:
+
+pymacaroons:
+
+    from macaroons.macaroon import Macaroon
+    from macaroons.verifier import Verifier
+
+    m = Macaroon(location='http://mybank/', identifier='we used our secret key', key='this is our super secret key; only we should know it')
+    m.add_first_party_caveat('general caveat')
+
+    def general_caveat_validator(predicate):
+        return predicate == 'general caveat'
+
+    v = Verifier()
+    v.satisfy_general(general_caveat_validator)
+    v.verify(m, 'this is our super secret key; only we should know it')
+
 
 
 Print types:
 
-from macaroons.macaroon import Macaroon
-m = Macaroon(location='http://mybank/', identifier='we used our secret key', key='this is our super secret key; only we should know it')
-print(type(m.location))
-print(m.location)
-print(type(m.identifier))
-print(m.identifier)
-print(type(m.signature))
-print(m.signature)
+    from macaroons.macaroon import Macaroon
+    m = Macaroon(location='http://mybank/', identifier='we used our secret key', key='this is our super secret key; only we should know it')
+    print(type(m.location))
+    print(m.location)
+    print(type(m.identifier))
+    print(m.identifier)
+    print(type(m.signature))
+    print(m.signature)
 
-m.add_first_party_caveat('test = caveat')
-print(type(m.signature))
-print(m.signature)
+    m.add_first_party_caveat('test = caveat')
+    print(type(m.signature))
+    print(m.signature)
 
-create_initial = m._create_initial_macaroon_signature()
-print(type(create_initial))
-print(create_initial)
+    create_initial = m._create_initial_macaroon_signature()
+    print(type(create_initial))
+    print(create_initial)
 
-mac = m._macaroon_hmac(b'asdfd', 'asdfdf')
-print(type(mac))
-print(mac)
+    mac = m._macaroon_hmac(b'asdfd', 'asdfdf')
+    print(type(mac))
+    print(mac)
 
-p = m._packetize('identifier', 'we used our secret key')
-print(type(p))
-print(p)
+    p = m._packetize('identifier', 'we used our secret key')
+    print(type(p))
+    print(p)
