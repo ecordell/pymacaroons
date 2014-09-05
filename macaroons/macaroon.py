@@ -115,8 +115,8 @@ class Macaroon:
                 combined += 'vid' + ' ' + caveat.verificationKeyId + '\n'
                 combined += 'cl' + ' ' + caveat.location + '\n'
 
-        combined += 'signature' + ' ' + self.signature
-        return combined
+        combined += 'signature' + ' ' + self.signature.decode('ascii')
+        print(combined)
 
     # TODO
     def is_same(self, macaroon):
