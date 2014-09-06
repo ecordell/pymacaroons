@@ -56,7 +56,7 @@ class Macaroon:
         pass
 
     def copy(self):
-        pass
+        return Macaroon(serialized=self.serialize())
 
     # Concatenates location, id, all caveats, and signature,
     # and then base64 encodes them
@@ -93,7 +93,6 @@ class Macaroon:
         # caveats
         i = 2
         while i < len(lines) - 2:
-            print(i)
             first_party = (
                 lines[i][PACKET_PREFIX_LENGTH:PACKET_PREFIX_LENGTH + len('cid')] == b'cid' and
                 lines[i+1][PACKET_PREFIX_LENGTH:PACKET_PREFIX_LENGTH + len('vid')] != b'vid'
@@ -137,13 +136,18 @@ class Macaroon:
     def is_same(self, macaroon):
         pass
 
-    # TODO
     def third_party_caveats(self):
-        pass
+        return [caveat for caveat in self.caveats if caveat.verificationKeyId is not None]
 
-    # TODO (only needed for third party)
+    # Protects discharge macaroons in the event they are sent to
+    # the wrong location by
     def prepare_for_request(self, macaroon):
-        pass
+        protected = macaroon.copy()
+        sighash = self._macaroon_hmac(self._truncate_or_pad(b'0'), self.signature.decode('ascii'))
+        macaroonhash = self._macaroon_hmac(self._truncate_or_pad(b'0'), macaroon.signature.decode('ascii'))
+        bothhash = self._macaroon_hmac(self._truncate_or_pad(b'0'), (sighash + macaroonhash).decode('ascii'))
+        protected._signature = ''.join([chr(a | b) for a, b in zip(sighash + macaroonhash, bothhash)])
+        return protected
 
     # The existing macaroon signature is the key for hashing the
     # caveat being added. This new hash becomes the signature of

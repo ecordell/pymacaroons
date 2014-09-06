@@ -100,12 +100,42 @@ Adding Third Party Caveats:
     
     from macaroons.macaroon import Macaroon
     m = Macaroon(location='http://mybank/', identifier='we used our other secret key', key='this is a different super-secret key; never use the same secret twice')
-    caveat_key = '4; guaranteed random by a fair toss of the dice'
     m.add_first_party_caveat('account = 3735928559')
+    m.serialize()
+    caveat_key = '4; guaranteed random by a fair toss of the dice'
     predicate = 'user = Alice'
     identifier = 'this was how we remind auth of key/pred'
     m.add_third_party_caveat('http://auth.mybank/', caveat_key, identifier)
-    print m.inspect()
+    print(m.inspect())
+    serialized = m.serialize()
+
+    n = Macaroon(serialized=serialized)
+    print(n.inspect())
+
+
+Preparing For Request:
+
+    from macaroons.macaroon import Macaroon
+    m = Macaroon(location='http://mybank/', identifier='we used our other secret key', key='this is a different super-secret key; never use the same secret twice')
+    m.add_first_party_caveat('account = 3735928559')
+    caveat_key = '4; guaranteed random by a fair toss of the dice'
+    predicate = 'user = Alice'
+    identifier = 'this was how we remind auth of key/pred'
+    m.add_third_party_caveat('http://auth.mybank/', caveat_key, identifier)
+
+    discharge = Macaroon(location='http://auth.mybank/', key=caveat_key, identifier=identifier)
+    discharge.add_first_party_caveat('time < 2015-01-01T00:00')
+    discharge.signature
+    '82a80681f9f32d419af12f6a71787a1bac3ab199df934ed950ddf20c25ac8c65'
+    protected = m.prepare_for_request(discharge)
+    protected.signature
+    'b38b26ab29d3724e728427e758cccc16d9d7f3de46d0d811b70b117b05357b9b'
+
+
+Verifying Third Party Caveats:
+
+
+
 
 Print types:
 
