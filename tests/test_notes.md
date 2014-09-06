@@ -96,6 +96,17 @@ pymacaroons:
 
 
 
+Adding Third Party Caveats:
+    
+    from macaroons.macaroon import Macaroon
+    m = Macaroon(location='http://mybank/', identifier='we used our other secret key', key='this is a different super-secret key; never use the same secret twice')
+    caveat_key = '4; guaranteed random by a fair toss of the dice'
+    m.add_first_party_caveat('account = 3735928559')
+    predicate = 'user = Alice'
+    identifier = 'this was how we remind auth of key/pred'
+    m.add_third_party_caveat('http://auth.mybank/', caveat_key, identifier)
+    print m.inspect()
+
 Print types:
 
     from macaroons.macaroon import Macaroon

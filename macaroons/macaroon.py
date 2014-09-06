@@ -5,7 +5,7 @@ import hashlib
 import binascii
 import base64
 import six
-
+from libnacl.secret import SecretBox
 
 from .caveat import Caveat
 
@@ -69,7 +69,7 @@ class Macaroon:
             combined += self._packetize('cid', caveat.caveatId.encode('ascii'))
 
             if caveat.verificationKeyId and caveat.location:
-                combined += self._packetize('vid', caveat.verificationKeyId.encode('ascii'))
+                combined += self._packetize('vid', binascii.unhexlify(caveat.verificationKeyId))
                 combined += self._packetize('cl', caveat.location.encode('ascii'))
 
         combined += self._packetize(
@@ -84,17 +84,32 @@ class Macaroon:
     # TODO: use python struct unpacking
     def _deserialize(self, data):
         PACKET_PREFIX_LENGTH = 4
-        decoded = base64.urlsafe_b64decode(data)
-        lines = decoded.split('\n')
+        decoded = base64.urlsafe_b64decode(data.encode('ascii'))
+        lines = decoded.split(b'\n')
         # location
-        self._location = lines[0][PACKET_PREFIX_LENGTH + len('location '):]
+        self._location = lines[0][PACKET_PREFIX_LENGTH + len('location '):].decode('ascii')
         # identifier
-        self._identifier = lines[1][PACKET_PREFIX_LENGTH + len('identifier '):]
+        self._identifier = lines[1][PACKET_PREFIX_LENGTH + len('identifier '):].decode('ascii')
         # caveats
-        for i in range(2, len(lines) - 2):
-            cid = lines[i][PACKET_PREFIX_LENGTH+len('cid '):]
-            self.caveats.append(Caveat(caveatId=cid))
-            # TODO: vid and cl
+        i = 2
+        while i < len(lines) - 2:
+            print(i)
+            first_party = (
+                lines[i][PACKET_PREFIX_LENGTH:PACKET_PREFIX_LENGTH + len('cid')] == b'cid' and
+                lines[i+1][PACKET_PREFIX_LENGTH:PACKET_PREFIX_LENGTH + len('vid')] != b'vid'
+            )
+            if first_party:
+                cid = lines[i][PACKET_PREFIX_LENGTH+len('cid '):]
+                self.caveats.append(Caveat(caveatId=cid.decode('ascii')))
+                i += 1  # skip vid and cl lines - already processed
+            else:
+                cid = lines[i][PACKET_PREFIX_LENGTH+len('cid '):]
+                vid = binascii.hexlify(
+                    lines[i+1][PACKET_PREFIX_LENGTH+len('vid '):]
+                )
+                cl = lines[i+2][PACKET_PREFIX_LENGTH+len('cl '):]
+                self.caveats.append(Caveat(caveatId=cid.decode('ascii'), verificationKeyId=vid, location=cl.decode('ascii')))
+                i += 3  # skip vid and cl lines - already processed
 
         # signature
         self._signature = \
@@ -112,11 +127,11 @@ class Macaroon:
             combined += 'cid' + ' ' + caveat.caveatId + '\n'
 
             if caveat.verificationKeyId and caveat.location:
-                combined += 'vid' + ' ' + caveat.verificationKeyId + '\n'
+                combined += 'vid' + ' ' + caveat.verificationKeyId.decode('ascii') + '\n'
                 combined += 'cl' + ' ' + caveat.location + '\n'
 
         combined += 'signature' + ' ' + self.signature.decode('ascii')
-        print(combined)
+        return combined
 
     # TODO
     def is_same(self, macaroon):
@@ -140,33 +155,50 @@ class Macaroon:
         self._signature = self._macaroon_hmac(encode_key, predicate)
         return self
 
-    # TODO
-    def add_third_party_caveat(self,
-                               location,
-                               key,
-                               key_id):
-        pass
+    # The third party caveat key is encrypted useing the current signature, and
+    # the caveat is added to the list. The existing macaroon signature
+    # is the key for hashing the string (verificationId + caveatId).
+    # This new hash becomes the signature of the macaroon with caveat added.
+    def add_third_party_caveat(self, location, key, key_id):
+        derived_key = self._generate_derived_key(key)
+        box = SecretBox(key=self._truncate_or_pad(self.signature))
+        verificationKeyId = binascii.hexlify(box.encrypt(derived_key))
+        caveat = Caveat(
+            caveatId=key_id,
+            location=location,
+            verificationKeyId=verificationKeyId
+        )
+        self._caveats.append(caveat)
+        encode_key = binascii.unhexlify(self.signature)
+        self._signature = self._macaroon_hmac(
+            encode_key,
+            caveat.verificationKeyId.decode('ascii') + caveat.caveatId
+        )
+        return self
 
-    # Given a high-entropy root key _key and an identifier id, the function
-    # _create_initial_macaroon_signature(_location, _identifier, _key) returns
-    # valid signature  sig = MAC(k, id).
+    # Given a high-entropy root key _key and an identifier id, this returns
+    # a valid signature sig = MAC(k, id).
     def _create_initial_macaroon_signature(self):
-        generator_key = b'macaroons-key-generator'
-        derived_key = hmac.new(
-            generator_key,
-            msg=self._key.encode('ascii'),
-            digestmod=hashlib.sha256
-        ).digest()
+        derived_key = self._generate_derived_key(self._key)
         return self._macaroon_hmac(derived_key, self._identifier)
+
+    def _generate_derived_key(self, key):
+        generator_key = b'macaroons-key-generator'
+        derived_key = self._hmac(generator_key, key)
+        return derived_key
 
     # key should be unhexlified, data is a string
     def _macaroon_hmac(self, key, data):
-        dig = hmac.new(
+        dig = self._hmac(key, data)
+        return binascii.hexlify(dig)
+
+    # key should be unhexlified, data is a string
+    def _hmac(self, key, data):
+        return hmac.new(
             key,
             msg=data.encode('ascii'),
             digestmod=hashlib.sha256
         ).digest()
-        return binascii.hexlify(dig)
 
     # TODO: pack using python struct
     # http://stackoverflow.com/questions/9566061/unspecified-byte-lengths-in-python
@@ -179,3 +211,13 @@ class Macaroon:
         header = packet_size_hex.zfill(4)
         packet = header.encode('ascii') + key.encode('ascii') + b' ' + data + b'\n'
         return packet
+
+    def _truncate_or_pad(self, byte_string):
+        byte_array = bytearray(byte_string)
+        length = len(byte_array)
+        if length > 32:
+            return bytes(byte_array[:32])
+        elif length < 32:
+            return bytes(byte_array + b"\0"*(32-length))
+        else:
+            return byte_string

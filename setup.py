@@ -20,7 +20,8 @@ setup(
     include_package_data=True,
     long_description=read('README.md'),
     install_requires=[
-        'six>=1.7.3'
+        'six>=1.7.3',
+        'libnacl>=1.3.5'
     ],
     classifiers=[
         'Development Status :: 1 - Planning',
