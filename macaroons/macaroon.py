@@ -140,13 +140,14 @@ class Macaroon:
         return [caveat for caveat in self.caveats if caveat.verificationKeyId is not None]
 
     # Protects discharge macaroons in the event they are sent to
-    # the wrong location by
+    # the wrong location by binding to the root macaroon
     def prepare_for_request(self, macaroon):
         protected = macaroon.copy()
-        sighash = self._macaroon_hmac(self._truncate_or_pad(b'0'), self.signature.decode('ascii'))
-        macaroonhash = self._macaroon_hmac(self._truncate_or_pad(b'0'), macaroon.signature.decode('ascii'))
-        bothhash = self._macaroon_hmac(self._truncate_or_pad(b'0'), (sighash + macaroonhash).decode('ascii'))
-        protected._signature = ''.join([chr(a | b) for a, b in zip(sighash + macaroonhash, bothhash)])
+        protected._signature = self._macaroon_hmac_concat(
+            b'\0',
+            self.signature.decode('ascii'),
+            macaroon.signature.decode('ascii')
+        )
         return protected
 
     # The existing macaroon signature is the key for hashing the
@@ -164,9 +165,11 @@ class Macaroon:
     # is the key for hashing the string (verificationId + caveatId).
     # This new hash becomes the signature of the macaroon with caveat added.
     def add_third_party_caveat(self, location, key, key_id):
-        derived_key = self._generate_derived_key(key)
-        box = SecretBox(key=self._truncate_or_pad(self.signature))
-        verificationKeyId = binascii.hexlify(box.encrypt(derived_key))
+        derived_key = self._truncate_or_pad(self._generate_derived_key(key))
+        old_key = self._truncate_or_pad(self.signature)
+        box = SecretBox(key=old_key)
+        encrypted = box.encrypt(derived_key)
+        verificationKeyId = base64.standard_b64encode(encrypted)
         caveat = Caveat(
             caveatId=key_id,
             location=location,
@@ -174,11 +177,32 @@ class Macaroon:
         )
         self._caveats.append(caveat)
         encode_key = binascii.unhexlify(self.signature)
-        self._signature = self._macaroon_hmac(
+        self._signature = self._macaroon_hmac_concat(
             encode_key,
-            caveat.verificationKeyId.decode('ascii') + caveat.caveatId
+            caveat.verificationKeyId.decode('ascii'),
+            caveat.caveatId
         )
         return self
+
+    # Hashes two strings, then concatenates them and hashes the combined
+    # string
+    def _macaroon_hmac_concat(self, key, data1, data2):
+        hash1 = hmac.new(
+            key,
+            msg=data1.encode('ascii'),
+            digestmod=hashlib.sha256
+        ).digest()
+        hash2 = hmac.new(
+            key,
+            msg=data2.encode('ascii'),
+            digestmod=hashlib.sha256
+        ).digest()
+        combined = hash1 + hash2
+        return hmac.new(
+            key,
+            msg=combined,
+            digestmod=hashlib.sha256
+        ).hexdigest().encode('ascii')
 
     # Given a high-entropy root key _key and an identifier id, this returns
     # a valid signature sig = MAC(k, id).
@@ -216,12 +240,14 @@ class Macaroon:
         packet = header.encode('ascii') + key.encode('ascii') + b' ' + data + b'\n'
         return packet
 
-    def _truncate_or_pad(self, byte_string):
+    def _truncate_or_pad(self, byte_string, size=None):
+        if size is None:
+            size = 32
         byte_array = bytearray(byte_string)
         length = len(byte_array)
-        if length > 32:
-            return bytes(byte_array[:32])
-        elif length < 32:
-            return bytes(byte_array + b"\0"*(32-length))
+        if length > size:
+            return bytes(byte_array[:size])
+        elif length < size:
+            return bytes(byte_array + b"\0"*(size-length))
         else:
             return byte_string
