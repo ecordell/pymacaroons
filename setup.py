@@ -12,7 +12,7 @@ setup(
     name='pymacaroons',
     version=__version__,
     description='Macaroon library for Python',
-    author='LocalMed',
+    author='Evan Cordell',
     author_email='evan.cordell@localmed.com',
     url='',
     license='MIT',
@@ -25,7 +25,7 @@ setup(
         'streql>=3.0.2',
     ],
     classifiers=[
-        'Development Status :: 1 - Planning',
+        'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: MIT License',

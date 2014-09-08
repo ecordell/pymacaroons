@@ -3,9 +3,7 @@ from __future__ import unicode_literals
 from mock import *
 from nose.tools import *
 
-
-from macaroons.macaroon import *
-from macaroons.verifier import *
+from macaroons import *
 
 
 class TestMacaroon(object):

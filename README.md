@@ -1,6 +1,6 @@
 # PyMacaroons
 
-This is a Python implementation of the Macaroon concept. *They're better than cookies!*
+This is a Python implementation of Macaroons. *They're better than cookies!*
 
 ## Installing 
 
@@ -17,9 +17,7 @@ To install PyMacaroons:
 
 ## Python notes
 
-Must be run on Python 3 or Python >= 2.7.7. Lower versions do not have the `hmac.compare_digest` method that prevents timing attacks.
-
-Alternately, a different library could be used to create and compare hmacs.
+Compatible with Python 2 and 3. 
 
 ## Prior Art
 

@@ -1,13 +1,13 @@
 from __future__ import unicode_literals
 
 import hmac
-import hashlib
 import binascii
-import base64
-import six
+from hashlib import sha256
+from base64 import standard_b64encode, urlsafe_b64decode, urlsafe_b64encode
+
 from libnacl.secret import SecretBox
 
-from .caveat import Caveat
+from macaroons.caveat import Caveat
 
 
 class Macaroon:
@@ -18,8 +18,7 @@ class Macaroon:
                  identifier=None,
                  key=None,
                  serialized=None,
-                 signature=None,
-                 provider=None):
+                 signature=None):
         self._serialized = serialized
         self._caveats = []
         # TODO: validations, only (loc, id, key) or serialized
@@ -84,7 +83,7 @@ class Macaroon:
             'signature',
             binascii.unhexlify(self.signature)
         )
-        return base64.urlsafe_b64encode(combined).decode('ascii')
+        return urlsafe_b64encode(combined).decode('ascii')
 
     def serialize_json(self):
         pass
@@ -92,7 +91,7 @@ class Macaroon:
     # TODO: use python struct unpacking
     def _deserialize(self, data):
         PACKET_PREFIX_LENGTH = 4
-        decoded = base64.urlsafe_b64decode(data.encode('ascii'))
+        decoded = urlsafe_b64decode(data.encode('ascii'))
         lines = decoded.split(b'\n')
         # location
         self._location = lines[0][PACKET_PREFIX_LENGTH + len('location '):].decode('ascii')
@@ -184,7 +183,7 @@ class Macaroon:
         old_key = self._truncate_or_pad(self.signature)
         box = SecretBox(key=old_key)
         encrypted = box.encrypt(key, nonce=nonce)
-        verificationKeyId = base64.standard_b64encode(encrypted)
+        verificationKeyId = standard_b64encode(encrypted)
         caveat = Caveat(
             caveatId=key_id,
             location=location,
@@ -205,18 +204,18 @@ class Macaroon:
         hash1 = hmac.new(
             key,
             msg=data1.encode('ascii'),
-            digestmod=hashlib.sha256
+            digestmod=sha256
         ).digest()
         hash2 = hmac.new(
             key,
             msg=data2.encode('ascii'),
-            digestmod=hashlib.sha256
+            digestmod=sha256
         ).digest()
         combined = hash1 + hash2
         return hmac.new(
             key,
             msg=combined,
-            digestmod=hashlib.sha256
+            digestmod=sha256
         ).hexdigest().encode('ascii')
 
     # Given a high-entropy root key _key and an identifier id, this returns
@@ -240,7 +239,7 @@ class Macaroon:
         return hmac.new(
             key,
             msg=data.encode('ascii'),
-            digestmod=hashlib.sha256
+            digestmod=sha256
         ).digest()
 
     # TODO: pack using python struct

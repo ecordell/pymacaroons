@@ -1,11 +1,11 @@
 import hmac
-import base64
+from base64 import standard_b64decode
 
 from libnacl.secret import SecretBox
 from libnacl import crypto_secretbox_NONCEBYTES
 from streql import equals
 
-from .macaroon import Macaroon
+from macaroons.macaroon import Macaroon
 
 
 class Verifier:
@@ -99,7 +99,7 @@ class Verifier:
     def _extract_caveat_key(self, compare_macaroon, caveat):
         key = compare_macaroon._truncate_or_pad(compare_macaroon.signature)
         box = SecretBox(key=key)
-        decoded_vid = base64.standard_b64decode(caveat.verificationKeyId)
+        decoded_vid = standard_b64decode(caveat.verificationKeyId)
         nonce = decoded_vid[:crypto_secretbox_NONCEBYTES]
         decrypted = box.decrypt(decoded_vid)
         return decrypted, nonce
