@@ -136,8 +136,11 @@ class Macaroon:
     def is_same(self, macaroon):
         pass
 
+    def first_party_caveats(self):
+        return [caveat for caveat in self.caveats if caveat.first_party()]
+
     def third_party_caveats(self):
-        return [caveat for caveat in self.caveats if caveat.verificationKeyId is not None]
+        return [caveat for caveat in self.caveats if caveat.third_party()]
 
     # Protects discharge macaroons in the event they are sent to
     # the wrong location by binding to the root macaroon
@@ -164,11 +167,12 @@ class Macaroon:
     # the caveat is added to the list. The existing macaroon signature
     # is the key for hashing the string (verificationId + caveatId).
     # This new hash becomes the signature of the macaroon with caveat added.
-    def add_third_party_caveat(self, location, key, key_id):
-        derived_key = self._truncate_or_pad(self._generate_derived_key(key))
+    def add_third_party_caveat(self, location, key, key_id, nonce=None):
+        #derived_key = self._truncate_or_pad(self._generate_derived_key(key))
+        derived_key = key.encode('ascii')
         old_key = self._truncate_or_pad(self.signature)
         box = SecretBox(key=old_key)
-        encrypted = box.encrypt(derived_key)
+        encrypted = box.encrypt(derived_key, nonce=nonce)
         verificationKeyId = base64.standard_b64encode(encrypted)
         caveat = Caveat(
             caveatId=key_id,
