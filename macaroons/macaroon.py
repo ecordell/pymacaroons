@@ -77,7 +77,7 @@ class Macaroon:
             combined += self._packetize('cid', caveat.caveatId.encode('ascii'))
 
             if caveat.verificationKeyId and caveat.location:
-                combined += self._packetize('vid', binascii.unhexlify(caveat.verificationKeyId))
+                combined += self._packetize('vid', caveat.verificationKeyId)
                 combined += self._packetize('cl', caveat.location.encode('ascii'))
 
         combined += self._packetize(

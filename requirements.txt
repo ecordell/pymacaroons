@@ -1,0 +1,7 @@
+# Actual Dependencies
+-e .
+
+# Test Dependencies
+nose==1.3.0
+coverage>=3.6,<3.99
+mock>=1.0.1,<1.0.99
