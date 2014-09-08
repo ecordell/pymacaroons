@@ -42,7 +42,7 @@ class Verifier:
         compare_macaroon = Macaroon(
             location=macaroon.location,
             identifier=macaroon.identifier,
-            key=key
+            signature=macaroon._macaroon_hmac(key, macaroon.identifier)
         )
 
         self._verify_caveats(macaroon, compare_macaroon, discharge_macaroons)
@@ -92,7 +92,7 @@ class Verifier:
 
         caveatMet = caveat_macaroon_verifier.verify_discharge(root_macaroon, caveat_macaroon, caveat_key, discharge_macaroons)
         if caveatMet:
-            compare_macaroon.add_third_party_caveat(caveat.location, caveat_key, caveat.caveatId, nonce=nonce)
+            compare_macaroon._add_third_party_caveat_direct(caveat.location, caveat_key, caveat.caveatId, nonce=nonce)
         return caveatMet
 
     def _extract_caveat_key(self, compare_macaroon, caveat):
@@ -101,7 +101,7 @@ class Verifier:
         decoded_vid = base64.standard_b64decode(caveat.verificationKeyId)
         nonce = decoded_vid[:crypto_secretbox_NONCEBYTES]
         decrypted = box.decrypt(decoded_vid)
-        return decrypted.decode('ascii'), nonce
+        return decrypted, nonce
 
     def _signatures_match(self, m1, m2):
         return hmac.compare_digest(m1.signature, m2.signature)

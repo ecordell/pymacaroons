@@ -18,6 +18,7 @@ class Macaroon:
                  identifier=None,
                  key=None,
                  serialized=None,
+                 signature=None,
                  provider=None):
         self._serialized = serialized
         self._caveats = []
@@ -25,8 +26,15 @@ class Macaroon:
         if location and identifier and key:
             self._location = location
             self._identifier = identifier
-            self._key = key
-            self._signature = self._create_initial_macaroon_signature()
+            self._signature = self._create_initial_macaroon_signature(key)
+            self._serialized = None
+        elif location and identifier and signature:
+            # This is only used from the verifier when we need to skip
+            # the inital signature hashing for verifying
+            # third party caveats
+            self._location = location
+            self._identifier = identifier
+            self._signature = signature
             self._serialized = None
         elif serialized:
             self._serialized = serialized
@@ -167,12 +175,15 @@ class Macaroon:
     # the caveat is added to the list. The existing macaroon signature
     # is the key for hashing the string (verificationId + caveatId).
     # This new hash becomes the signature of the macaroon with caveat added.
-    def add_third_party_caveat(self, location, key, key_id, nonce=None):
-        #derived_key = self._truncate_or_pad(self._generate_derived_key(key))
-        derived_key = key.encode('ascii')
+    def add_third_party_caveat(self, location, key, key_id):
+        derived_key = self._truncate_or_pad(self._generate_derived_key(key))
+        self._add_third_party_caveat_direct(location, derived_key, key_id, nonce=None)
+        return self
+
+    def _add_third_party_caveat_direct(self, location, key, key_id, nonce=None):
         old_key = self._truncate_or_pad(self.signature)
         box = SecretBox(key=old_key)
-        encrypted = box.encrypt(derived_key, nonce=nonce)
+        encrypted = box.encrypt(key, nonce=nonce)
         verificationKeyId = base64.standard_b64encode(encrypted)
         caveat = Caveat(
             caveatId=key_id,
@@ -210,8 +221,8 @@ class Macaroon:
 
     # Given a high-entropy root key _key and an identifier id, this returns
     # a valid signature sig = MAC(k, id).
-    def _create_initial_macaroon_signature(self):
-        derived_key = self._generate_derived_key(self._key)
+    def _create_initial_macaroon_signature(self, key):
+        derived_key = self._generate_derived_key(key)
         return self._macaroon_hmac(derived_key, self._identifier)
 
     def _generate_derived_key(self, key):
