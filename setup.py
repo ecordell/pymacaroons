@@ -21,7 +21,8 @@ setup(
     long_description=read('README.md'),
     install_requires=[
         'six>=1.7.3',
-        'libnacl>=1.3.5'
+        'libnacl>=1.3.5',
+        'streql>=3.0.2',
     ],
     classifiers=[
         'Development Status :: 1 - Planning',

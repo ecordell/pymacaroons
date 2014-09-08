@@ -3,6 +3,7 @@ import base64
 
 from libnacl.secret import SecretBox
 from libnacl import crypto_secretbox_NONCEBYTES
+from streql import equals
 
 from .macaroon import Macaroon
 
@@ -104,4 +105,5 @@ class Verifier:
         return decrypted, nonce
 
     def _signatures_match(self, m1, m2):
-        return hmac.compare_digest(m1.signature, m2.signature)
+        # uses a constant-time compare
+        return equals(m1.signature, m2.signature)
