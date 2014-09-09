@@ -12,5 +12,6 @@ before_install:
   - sudo ldconfig
   - cd ..
 install: "pip install -r requirements.txt"
-script: nosetests
+script: coverage run --source=macaroons nosetests
+after_success: coveralls
 
