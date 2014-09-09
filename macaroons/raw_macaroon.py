@@ -79,7 +79,6 @@ class RawMacaroon(object):
         combined = self._packetize(b'location', self.location)
         combined += self._packetize(b'identifier', self.identifier)
 
-        # TODO: list comprehension
         for caveat in self.caveats:
             combined += self._packetize(b'cid', caveat._caveatId)
 
@@ -151,7 +150,6 @@ class RawMacaroon(object):
         combined = 'location' + ' ' + self.location + '\n'
         combined += 'identifier' + ' ' + self.identifier + '\n'
 
-        # TODO: list comprehension
         for caveat in self.caveats:
             combined += 'cid' + ' ' + caveat.caveatId + '\n'
 
@@ -262,12 +260,10 @@ class RawMacaroon(object):
         derived_key = self._hmac(generator_key, key)
         return derived_key
 
-    # key should be unhexlified, data is a string
     def _macaroon_hmac(self, key, data):
         dig = self._hmac(key, data)
         return binascii.hexlify(dig)
 
-    # key should be unhexlified, data is a string
     def _hmac(self, key, data):
         return hmac.new(
             key,
