@@ -4,6 +4,7 @@ from base64 import standard_b64decode
 from libnacl.secret import SecretBox
 from libnacl import crypto_secretbox_NONCEBYTES
 from streql import equals
+from six import PY3
 
 from macaroons.macaroon import Macaroon
 from macaroons.raw_macaroon import RawMacaroon
@@ -149,4 +150,9 @@ class Verifier(object):
 
     def _signatures_match(self, m1, m2):
         # uses a constant-time compare
-        return equals(m1.signature, m2.signature)
+        sig1 = convert_to_bytes(m1.signature)
+        sig2 = convert_to_bytes(m2.signature)
+        if PY3:
+            return hmac.compare_digest(sig1, sig2)
+        else:
+            return equals(sig1, sig2)
