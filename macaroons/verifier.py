@@ -14,7 +14,7 @@ from macaroons.utils import (convert_to_bytes,
                              truncate_or_pad)
 
 
-class Verifier:
+class Verifier(object):
 
     predicates = []
     callbacks = []

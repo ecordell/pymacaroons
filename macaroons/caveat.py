@@ -1,7 +1,7 @@
 from macaroons.utils import convert_to_string, convert_to_bytes
 
 
-class Caveat:
+class Caveat(object):
 
     def __init__(self,
                  caveatId=None,

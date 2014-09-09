@@ -5,7 +5,7 @@ from macaroons.exceptions import MacaroonInitException
 from macaroons.utils import convert_to_bytes, convert_to_string
 
 
-class Macaroon:
+class Macaroon(object):
 
     def __init__(self,
                  location=None,

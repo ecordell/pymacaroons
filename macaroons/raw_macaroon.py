@@ -11,7 +11,7 @@ from macaroons.caveat import Caveat
 from macaroons.utils import truncate_or_pad
 
 
-class RawMacaroon:
+class RawMacaroon(object):
     """
     RawMacaroon uses byte types internally and in its public interface.
 
