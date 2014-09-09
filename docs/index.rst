@@ -3,23 +3,23 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-$project
+PyMacaroons
 ========
 
-$project is a Python implementation of Macaroons. *They're better than cookies!*
+PyMacaroons is a Python implementation of Macaroons. *They're better than cookies!*
 
 Installation
 ------------
 
-Install $project by running:
+Install PyMacaroons by running:
 
     pip install $project
 
 Contribute
 ----------
 
-- Issue Tracker: github.com/ecordell/$project/issues
-- Source Code: github.com/ecordell/$project
+- Issue Tracker: github.com/ecordell/pymacaroons/issues
+- Source Code: github.com/ecordell/pymacaroons
 
 License
 -------
