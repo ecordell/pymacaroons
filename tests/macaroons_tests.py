@@ -4,7 +4,7 @@ from mock import *
 from nose.tools import *
 
 from macaroons import *
-
+from macaroons.utils import *
 
 class TestMacaroon(object):
 
@@ -19,7 +19,7 @@ class TestMacaroon(object):
         )
         assert_equal(
             m.signature,
-            b'e3d9e02908526c4c0039ae15114115d97fdd68bf2ba379b342aaf0f617d0552f'
+            'e3d9e02908526c4c0039ae15114115d97fdd68bf2ba379b342aaf0f617d0552f'
         )
 
     def test_first_party_caveat(self):
@@ -31,7 +31,7 @@ class TestMacaroon(object):
         m.add_first_party_caveat('test = caveat')
         assert_equal(
             m.signature,
-            b'197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67'
+            '197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67'
         )
 
     def test_serializing(self):
@@ -56,7 +56,7 @@ cmUgGXusegRK8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'
         )
         assert_equal(
             m.signature,
-            b'197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67'
+            '197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67'
         )
 
     def test_verify_first_party_exact_caveats(self):
@@ -105,15 +105,15 @@ never use the same secret twice'
         predicate = 'user = Alice'
         identifier = 'this was how we remind auth of key/pred'
         # use a fixed nonce to ensure the same signature
-        m._add_third_party_caveat_direct(
+        m._raw_macaroon._add_third_party_caveat_direct(
             'http://auth.mybank/',
             caveat_key.encode('ascii'),
             identifier,
-            nonce=m._truncate_or_pad(b'\0', size=24)
+            nonce=truncate_or_pad(b'\0', size=24)
         )
         assert_equal(
             m.signature,
-            b'39420840b3a0ac50340cd235c3a77ecb11dcbc2e5d0145f60796a56d378bd997'
+            '39420840b3a0ac50340cd235c3a77ecb11dcbc2e5d0145f60796a56d378bd997'
         )
 
     def test_serializing_macaroon_with_first_and_third_caveats(self):
@@ -147,11 +147,11 @@ never use the same secret twice'
         predicate = 'user = Alice'
         identifier = 'this was how we remind auth of key/pred'
         # use a fixed nonce to ensure the same signature
-        m._add_third_party_caveat_direct(
+        m._raw_macaroon._add_third_party_caveat_direct(
             'http://auth.mybank/',
             caveat_key.encode('ascii'),
             identifier,
-            nonce=m._truncate_or_pad(b'\0', size=24)
+            nonce=truncate_or_pad(b'\0', size=24)
         )
 
         discharge = Macaroon(
@@ -163,7 +163,7 @@ never use the same secret twice'
         protected = m.prepare_for_request(discharge)
         assert_equal(
             protected.signature,
-            b'4eb7f2b310a302fa998a884055b4bd1b86e764a2ddf4e8c806579ec855328965'
+            '4eb7f2b310a302fa998a884055b4bd1b86e764a2ddf4e8c806579ec855328965'
         )
 
     def test_verify_third_party_caveats(self):
