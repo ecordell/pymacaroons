@@ -146,8 +146,8 @@ class RawMacaroon:
             combined += 'cid' + ' ' + caveat.caveatId + '\n'
 
             if caveat.verificationKeyId and caveat.location:
-                combined += 'vid' + ' ' +
-                caveat.verificationKeyId.decode('ascii') + '\n'
+                combined += 'vid' + ' ' + \
+                    caveat.verificationKeyId.decode('ascii') + '\n'
                 combined += 'cl' + ' ' + caveat.location + '\n'
 
         combined += 'signature' + ' ' + self.signature.decode('ascii')
@@ -274,6 +274,6 @@ class RawMacaroon:
         # Ignore the first two chars, 0x
         packet_size_hex = hex(packet_size)[2:]
         header = packet_size_hex.zfill(4)
-        packet = header.encode('ascii') +
-        key.encode('ascii') + b' ' + data + b'\n'
+        packet = header.encode('ascii') + \
+            key.encode('ascii') + b' ' + data + b'\n'
         return packet
