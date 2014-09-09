@@ -2,19 +2,22 @@ import os
 
 from setuptools import find_packages, setup
 
-from macaroons import __version__
 
+version = __import__('macaroons').__version__
+
+
+def read_file(*paths):
+    here = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(here, *paths)) as f:
+        return f.read()
 
 # Get long_description from index.rst:
-here = os.path.dirname(os.path.abspath(__file__))
-f = open(os.path.join(here, 'docs', 'index.rst'))
-long_description = f.read().strip()
-long_description = long_description.split('split here', 1)[1]
-f.close()
+long_description = read_file('docs', 'index.rst')
+long_description = long_description.strip().split('split here', 2)[1][:-12]
 
 setup(
     name='pymacaroons',
-    version=__version__,
+    version=version,
     description='Macaroon library for Python',
     author='Evan Cordell',
     author_email='evan.cordell@localmed.com',
