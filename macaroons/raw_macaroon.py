@@ -9,7 +9,7 @@ from base64 import standard_b64encode, urlsafe_b64decode, urlsafe_b64encode
 from libnacl.secret import SecretBox
 
 from macaroons.caveat import Caveat
-from macaroons.utils import truncate_or_pad
+from macaroons.utils import truncate_or_pad, convert_to_bytes
 
 
 class RawMacaroon(object):
@@ -103,21 +103,29 @@ class RawMacaroon(object):
         index = 0
 
         while index < len(decoded):
-            packet_length = int(struct.unpack("4s", decoded[index:index + PACKET_PREFIX_LENGTH])[0], 16)
+            packet_length = int(
+                struct.unpack(
+                    b"4s",
+                    decoded[index:index + PACKET_PREFIX_LENGTH]
+                )[0],
+                16
+            )
             packet = decoded[index:index + packet_length]
 
             start_index = index + PACKET_PREFIX_LENGTH
             end_index = index + packet_length - 1
             if packet[PACKET_PREFIX_LENGTH:].startswith(b'location'):
-                self._location = decoded[start_index + len(b'location '): end_index]
+                self._location = \
+                    decoded[start_index + len(b'location '): end_index]
                 index = index + packet_length
 
             if packet[PACKET_PREFIX_LENGTH:].startswith(b'identifier'):
-                self._identifier = decoded[start_index + len(b'identifier '): end_index]
+                self._identifier = \
+                    decoded[start_index + len(b'identifier '): end_index]
                 index = index + packet_length
 
             if packet[PACKET_PREFIX_LENGTH:].startswith(b'cid'):
-                cid = decoded[start_index+ len(b'cid '): end_index]
+                cid = decoded[start_index + len(b'cid '): end_index]
                 self.caveats.append(Caveat(caveatId=cid))
                 index = index + packet_length
 
@@ -276,7 +284,7 @@ class RawMacaroon(object):
         header = packet_size_hex.zfill(4).encode('ascii')
         packet_content = key + b' ' + data + b'\n'
         packet = struct.pack(
-            b"4s%ds" % len(packet_content),
+            convert_to_bytes("4s%ds" % len(packet_content)),
             header,
             packet_content
         )
