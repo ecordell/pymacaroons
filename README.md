@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ecordell/pymacaroons.svg?branch=master)](https://travis-ci.org/ecordell/pymacaroons)
+
 # PyMacaroons
 
 This is a Python implementation of Macaroons. *They're better than cookies!*
