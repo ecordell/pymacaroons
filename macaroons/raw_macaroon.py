@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import hmac
 import binascii
+import struct
 from hashlib import sha256
 from base64 import standard_b64encode, urlsafe_b64decode, urlsafe_b64encode
 
@@ -75,19 +76,19 @@ class RawMacaroon(object):
     # Concatenates location, id, all caveats, and signature,
     # and then base64 encodes them
     def serialize(self):
-        combined = self._packetize('location', self.location)
-        combined += self._packetize('identifier', self.identifier)
+        combined = self._packetize(b'location', self.location)
+        combined += self._packetize(b'identifier', self.identifier)
 
         # TODO: list comprehension
         for caveat in self.caveats:
-            combined += self._packetize('cid', caveat._caveatId)
+            combined += self._packetize(b'cid', caveat._caveatId)
 
             if caveat._verificationKeyId and caveat._location:
-                combined += self._packetize('vid', caveat._verificationKeyId)
-                combined += self._packetize('cl', caveat._location)
+                combined += self._packetize(b'vid', caveat._verificationKeyId)
+                combined += self._packetize(b'cl', caveat._location)
 
         combined += self._packetize(
-            'signature',
+            b'signature',
             binascii.unhexlify(self._signature)
         )
         return urlsafe_b64encode(combined)
@@ -95,46 +96,47 @@ class RawMacaroon(object):
     def serialize_json(self):
         pass
 
-    # TODO: use python struct unpacking
     def _deserialize(self, data):
         PACKET_PREFIX_LENGTH = 4
         decoded = urlsafe_b64decode(data)
-        lines = decoded.split(b'\n')
-        # location
-        self._location = lines[0][PACKET_PREFIX_LENGTH + len('location '):].decode('ascii')
-        # identifier
-        self._identifier = lines[1][PACKET_PREFIX_LENGTH + len('identifier '):].decode('ascii')
-        # caveats
-        i = 2
-        while i < len(lines) - 2:
-            first_party = (
-                lines[i][PACKET_PREFIX_LENGTH:PACKET_PREFIX_LENGTH + len('cid')] == b'cid' and
-                lines[i+1][PACKET_PREFIX_LENGTH:PACKET_PREFIX_LENGTH + len('vid')] != b'vid'
-            )
-            if first_party:
-                cid = lines[i][PACKET_PREFIX_LENGTH+len('cid '):]
-                self.caveats.append(Caveat(caveatId=cid.decode('ascii')))
-                i += 1  # skip vid and cl lines - already processed
-            else:
-                cid = lines[i][PACKET_PREFIX_LENGTH+len('cid '):]
-                vid = binascii.hexlify(
-                    lines[i+1][PACKET_PREFIX_LENGTH+len('vid '):]
-                )
-                cl = lines[i+2][PACKET_PREFIX_LENGTH+len('cl '):]
-                self.caveats.append(
-                    Caveat(
-                        caveatId=cid.decode('ascii'),
-                        verificationKeyId=vid,
-                        location=cl.decode('ascii')
-                    )
-                )
-                i += 3  # skip vid and cl lines - already processed
 
-        # signature
-        self._signature = \
-            binascii.hexlify(
-                lines[len(lines) - 2][PACKET_PREFIX_LENGTH+len('signature '):]
-            )
+        index = 0
+
+        while index < len(decoded):
+            packet_length = int(struct.unpack("4s", decoded[index:index + PACKET_PREFIX_LENGTH])[0], 16)
+            packet = decoded[index:index + packet_length]
+
+            start_index = index + PACKET_PREFIX_LENGTH
+            end_index = index + packet_length - 1
+            if packet[PACKET_PREFIX_LENGTH:].startswith(b'location'):
+                self._location = decoded[start_index + len(b'location '): end_index]
+                index = index + packet_length
+
+            if packet[PACKET_PREFIX_LENGTH:].startswith(b'identifier'):
+                self._identifier = decoded[start_index + len(b'identifier '): end_index]
+                index = index + packet_length
+
+            if packet[PACKET_PREFIX_LENGTH:].startswith(b'cid'):
+                cid = decoded[start_index+ len(b'cid '): end_index]
+                self.caveats.append(Caveat(caveatId=cid))
+                index = index + packet_length
+
+            if packet[PACKET_PREFIX_LENGTH:].startswith(b'vid'):
+                vid = decoded[start_index + len(b'vid '): end_index]
+                self.caveats[-1].verificationKeyId = vid
+                index = index + packet_length
+
+            if packet[PACKET_PREFIX_LENGTH:].startswith(b'cl'):
+                cl = decoded[start_index + len(b'cl '): end_index]
+                self.caveats[-1].location = cl
+                index = index + packet_length
+
+            if packet[PACKET_PREFIX_LENGTH:].startswith(b'signature'):
+                self._signature = binascii.hexlify(
+                    decoded[start_index + len(b'signature '): end_index]
+                )
+                index = len(decoded)
+
         return self
 
     def inspect(self):
@@ -265,15 +267,17 @@ class RawMacaroon(object):
             digestmod=sha256
         ).digest()
 
-    # TODO: pack using python struct
-    # http://stackoverflow.com/questions/9566061/unspecified-byte-lengths-in-python
     def _packetize(self, key, data):
         PACKET_PREFIX_LENGTH = 4
         # The 2 covers the space and the newline
         packet_size = PACKET_PREFIX_LENGTH + 2 + len(key) + len(data)
         # Ignore the first two chars, 0x
         packet_size_hex = hex(packet_size)[2:]
-        header = packet_size_hex.zfill(4)
-        packet = header.encode('ascii') + \
-            key.encode('ascii') + b' ' + data + b'\n'
+        header = packet_size_hex.zfill(4).encode('ascii')
+        packet_content = key + b' ' + data + b'\n'
+        packet = struct.pack(
+            "4s%ds" % len(packet_content),
+            header,
+            packet_content
+        )
         return packet

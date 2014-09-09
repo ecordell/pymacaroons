@@ -46,14 +46,19 @@ m = Macaroon(
 # Add a caveat for the target service
 m.add_first_party_caveat('general caveat')
 
+# Serialize for transport in a cookie, url, OAuth token, etc
+serialized = m.serialize()
+
+
+# Some time later, the service recieves the macaroon and must verify it
+n = Macaroon(serialized=serialized)
+
+v = Verifier()
 
 # General caveats are verified by an arbitrary functions
 def general_caveat_validator(predicate):
     return predicate == 'general caveat'
-
-# Some time later, the service recieves the macaroon and must verify it
-v = Verifier()
-
+    
 # The verifier is informed of all relevant contextual information needed
 # to verify incoming macaroons
 v.satisfy_general(general_caveat_validator)
@@ -64,8 +69,8 @@ v.satisfy_exact('general caveat')
 
 # Verify the macaroon using the key matching the macaroon identifier
 verified = v.verify(
-    m,
-    keys[m.identifier]
+    n,
+    keys[n.identifier]
 )
 ```
 

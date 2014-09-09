@@ -131,6 +131,7 @@ never use the same secret twice'
         m.add_third_party_caveat('http://auth.mybank/', caveat_key, identifier)
 
         n = Macaroon(serialized=m.serialize())
+
         assert_equal(
             m.signature,
             n.signature
