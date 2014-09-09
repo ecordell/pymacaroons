@@ -3,7 +3,6 @@ from base64 import standard_b64decode
 
 from libnacl.secret import SecretBox
 from libnacl import crypto_secretbox_NONCEBYTES
-from streql import equals
 from six import PY3
 
 from macaroons.macaroon import Macaroon
@@ -12,7 +11,8 @@ from macaroons.exceptions import (MacaroonInvalidSignatureException,
                                   MacaroonUnmetCaveatException)
 from macaroons.utils import (convert_to_bytes,
                              convert_to_string,
-                             truncate_or_pad)
+                             truncate_or_pad,
+                             equals)
 
 
 class Verifier(object):
