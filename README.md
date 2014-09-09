@@ -9,7 +9,7 @@ Macaroons, like cookies, are a form of bearer credential. Unlike opaque tokens, 
 
 Macaroons allow for delegation and attenuation of authorization. They are simple and fast to verify, and decouple authorization policy from the enforcement of that policy.
 
-For a simple example, see the [Quickstart Guide](#quickstart). For more in-depth examples check out the [functional tests](https://github.com/ecordell/pymacaroons/blob/master/tests/macaroons_tests.py) and [references](#references).
+For a simple example, see the [Quickstart Guide](#quickstart). For more in-depth examples check out the [functional tests](https://github.com/ecordell/pymacaroons/blob/master/tests/macaroons_tests.py) and [references](#references-and-further-reading).
 
 ## Installing 
 
@@ -85,7 +85,8 @@ Both PyMacaroons and libmacaroons use the same underlying cryptographic library 
 
 ## References and Further Reading
 
-[The Macaroon Paper](http://research.google.com/pubs/pub41892.html)
-[Mozilla Macaroon Tech Talk](https://air.mozilla.org/macaroons-cookies-with-contextual-caveats-for-decentralized-authorization-in-the-cloud/)
-[libmacaroons](https://github.com/rescrv/libmacaroons)
+- [The Macaroon Paper](http://research.google.com/pubs/pub41892.html)
+- [Mozilla Macaroon Tech Talk](https://air.mozilla.org/macaroons-cookies-with-contextual-caveats-for-decentralized-authorization-in-the-cloud/)
+- [libmacaroons](https://github.com/rescrv/libmacaroons)
+- [libnacl](https://github.com/saltstack/libnacl)
 
