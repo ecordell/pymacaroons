@@ -74,7 +74,9 @@ class Macaroon(object):
     # the wrong location by binding to the root macaroon
     def prepare_for_request(self, macaroon):
         protected = self.copy()
-        protected._raw_macaroon = self._raw_macaroon.prepare_for_request(macaroon._raw_macaroon)
+        protected._raw_macaroon = self._raw_macaroon.prepare_for_request(
+            macaroon._raw_macaroon
+        )
         return protected
 
     # The existing macaroon signature is the key for hashing the

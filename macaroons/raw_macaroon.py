@@ -276,7 +276,7 @@ class RawMacaroon(object):
         header = packet_size_hex.zfill(4).encode('ascii')
         packet_content = key + b' ' + data + b'\n'
         packet = struct.pack(
-            "4s%ds" % len(packet_content),
+            b"4s%ds" % len(packet_content),
             header,
             packet_content
         )
