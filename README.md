@@ -9,7 +9,7 @@ Macaroons, like cookies, are a form of bearer credential. Unlike opaque tokens, 
 
 Macaroons allow for delegation and attenuation of authorization. They are simple and fast to verify, and decouple authorization policy from the enforcement of that policy.
 
-For a simple example, see the [Quickstart](#quickstart). For more in-depth examples look at the functional tests and check out the references.
+For a simple example, see the [Quickstart Guide](#quickstart). For more in-depth examples check out the [functional tests](https://github.com/ecordell/pymacaroons/blob/master/tests/macaroons_tests.py) and [references](#references).
 
 ## Installing 
 
@@ -28,45 +28,46 @@ To install PyMacaroons:
 
 ## Quickstart
 
-    from macaroons.macaroon import Macaroon
-    from macaroons.verifier import Verifier
+```python
+from macaroons.macaroon import Macaroon
+from macaroons.verifier import Verifier
 
-    keys = {
-        'secret_key_1': 'a very secret key, used to sign the macaroon'
-    }
-    # Construct a Macaroon. The location and identifier will be visible after
-    # construction, and identify which service and key to use to verify it.
-    m = Macaroon(
-        location='http://mybank/',
-        identifier='secret_key_1',
-        key=keys['secret_key_1']
-    )
+keys = {
+    'secret_key_1': 'a very secret key, used to sign the macaroon'
+}
+# Construct a Macaroon. The location and identifier will be visible after
+# construction, and identify which service and key to use to verify it.
+m = Macaroon(
+    location='http://mybank/',
+    identifier='secret_key_1',
+    key=keys['secret_key_1']
+)
 
-    # Add a caveat for the target service
-    m.add_first_party_caveat('general caveat')
+# Add a caveat for the target service
+m.add_first_party_caveat('general caveat')
 
 
-    # General caveats are verified by an arbitrary functions
-    def general_caveat_validator(predicate):
-        return predicate == 'general caveat'
+# General caveats are verified by an arbitrary functions
+def general_caveat_validator(predicate):
+    return predicate == 'general caveat'
 
-    # Some time later, the service recieves the macaroon and must verify it
-    v = Verifier()
+# Some time later, the service recieves the macaroon and must verify it
+v = Verifier()
 
-    # The verifier is informed of all relevant contextual information needed
-    # to verify incoming macaroons
-    v.satisfy_general(general_caveat_validator)
+# The verifier is informed of all relevant contextual information needed
+# to verify incoming macaroons
+v.satisfy_general(general_caveat_validator)
 
-    # Note that in this case, the general_caveat_validator() is just checking
-    # equality. This is equivalent to:
-    v.satisfy_exact('general caveat')
+# Note that in this case, the general_caveat_validator() is just checking
+# equality. This is equivalent to:
+v.satisfy_exact('general caveat')
 
-    # Verify the macaroon using the key matching the macaroon identifier
-    verified = v.verify(
-        m,
-        keys[m.identifier]
-    )
-
+# Verify the macaroon using the key matching the macaroon identifier
+verified = v.verify(
+    m,
+    keys[m.identifier]
+)
+```
 
 ## Documentation
 
