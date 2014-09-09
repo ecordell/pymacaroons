@@ -5,8 +5,12 @@ from setuptools import find_packages, setup
 from macaroons import __version__
 
 
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+# Get long_description from index.rst:
+here = os.path.dirname(os.path.abspath(__file__))
+f = open(os.path.join(here, 'docs', 'index.rst'))
+long_description = f.read().strip()
+long_description = long_description.split('split here', 1)[1]
+f.close()
 
 setup(
     name='pymacaroons',
@@ -18,7 +22,7 @@ setup(
     license='MIT',
     packages=find_packages(exclude=['tests', 'tests.*']),
     include_package_data=True,
-    long_description=read('README.md'),
+    long_description=long_description,
     install_requires=[
         'six>=1.7.3',
         'libnacl>=1.3.5',

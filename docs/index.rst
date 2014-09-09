@@ -3,6 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. comment: split here
+
 PyMacaroons
 ========
 
@@ -13,7 +15,7 @@ Installation
 
 Install PyMacaroons by running:
 
-    pip install $project
+    pip install pymacaroons
 
 Contribute
 ----------
