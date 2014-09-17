@@ -3,13 +3,16 @@ from __future__ import unicode_literals
 import hmac
 import binascii
 import struct
+import json
 from hashlib import sha256
 from base64 import standard_b64encode, urlsafe_b64decode, urlsafe_b64encode
 
 from libnacl.secret import SecretBox
 
 from macaroons.caveat import Caveat
-from macaroons.utils import truncate_or_pad, convert_to_bytes
+from macaroons.utils import (truncate_or_pad,
+                             convert_to_bytes,
+                             convert_to_string)
 
 
 class RawMacaroon(object):
@@ -28,8 +31,9 @@ class RawMacaroon(object):
                  identifier=None,
                  key=None,
                  serialized=None,
-                 signature=None):
-        self._serialized = serialized
+                 signature=None,
+                 json=None):
+        self._serialized = None
         self._caveats = []
         if location and identifier and key:
             self._location = location
@@ -47,6 +51,8 @@ class RawMacaroon(object):
         elif serialized:
             self._serialized = serialized
             self._deserialize(serialized)
+        elif json:
+            self._deserialize_json(json)
         else:
             pass
 
@@ -93,7 +99,13 @@ class RawMacaroon(object):
         return urlsafe_b64encode(combined)
 
     def serialize_json(self):
-        pass
+        serialized = {
+            'location': convert_to_string(self.location),
+            'identifier': convert_to_string(self.identifier),
+            'caveats': [caveat.to_dict() for caveat in self.caveats],
+            'signature': convert_to_string(self.signature)
+        }
+        return json.dumps(serialized)
 
     def _deserialize(self, data):
         PACKET_PREFIX_LENGTH = 4
@@ -146,6 +158,22 @@ class RawMacaroon(object):
 
         return self
 
+    def _deserialize_json(self, data):
+        deserialized = json.loads(convert_to_string(data))
+        print(deserialized)
+        print(self)
+        self._location = deserialized['location']
+        self._identifier = deserialized['identifier']
+        for c in deserialized['caveats']:
+            caveat = Caveat(
+                caveatId=c['cid'],
+                verificationKeyId=c['vid'],
+                location=c['cl']
+            )
+            self._caveats.append(caveat)
+        self._signature = convert_to_bytes(deserialized['signature'])
+        return self
+
     def inspect(self):
         combined = 'location' + ' ' + self.location + '\n'
         combined += 'identifier' + ' ' + self.identifier + '\n'
@@ -155,10 +183,10 @@ class RawMacaroon(object):
 
             if caveat.verificationKeyId and caveat.location:
                 combined += 'vid' + ' ' + \
-                    caveat.verificationKeyId.decode('ascii') + '\n'
+                    caveat._verificationKeyId.decode('ascii') + '\n'
                 combined += 'cl' + ' ' + caveat.location + '\n'
 
-        combined += 'signature' + ' ' + self.signature.decode('ascii')
+        combined += 'signature' + ' ' + self._signature.decode('ascii')
         return combined
 
     # TODO

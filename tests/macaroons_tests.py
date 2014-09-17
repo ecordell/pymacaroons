@@ -1,11 +1,14 @@
 from __future__ import unicode_literals
+import json
 
 from mock import *
 from nose.tools import *
 
+
 from macaroons.macaroon import Macaroon
 from macaroons.verifier import Verifier
 from macaroons.utils import *
+
 
 class TestMacaroon(object):
 
@@ -50,10 +53,33 @@ K8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'
         )
 
     def test_deserializing(self):
-        m = Macaroon(
-            serialized='MDAxY2xvY2F0aW9uIGh0dHA6Ly9teWJhbmsvCjAwMjZpZGVudGlmaW\
+        m = Macaroon.from_binary(
+            'MDAxY2xvY2F0aW9uIGh0dHA6Ly9teWJhbmsvCjAwMjZpZGVudGlmaW\
 VyIHdlIHVzZWQgb3VyIHNlY3JldCBrZXkKMDAxNmNpZCB0ZXN0ID0gY2F2ZWF0CjAwMmZzaWduYXR1\
 cmUgGXusegRK8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'
+        )
+        assert_equal(
+            m.signature,
+            '197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67'
+        )
+
+    def test_serializing_json(self):
+        m = Macaroon(
+            location='http://mybank/',
+            identifier='we used our secret key',
+            key='this is our super secret key; only we should know it'
+        )
+        m.add_first_party_caveat('test = caveat')
+        assert_equal(
+            json.loads(m.serialize_json())['signature'],
+            "197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67"
+        )
+
+    def test_deserializing_json(self):
+        m = Macaroon.from_json(
+            '{"location": "http://mybank/", "identifier": "we used our secret \
+key", "signature": "197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c2\
+3dbd67", "caveats": [{"cl": null, "cid": "test = caveat", "vid": null}]}'
         )
         assert_equal(
             m.signature,
@@ -130,7 +156,7 @@ never use the same secret twice'
         identifier = 'this was how we remind auth of key/pred'
         m.add_third_party_caveat('http://auth.mybank/', caveat_key, identifier)
 
-        n = Macaroon(serialized=m.serialize())
+        n = Macaroon.from_binary(m.serialize())
 
         assert_equal(
             m.signature,

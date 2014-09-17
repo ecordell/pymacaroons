@@ -10,8 +10,7 @@ class Macaroon(object):
     def __init__(self,
                  location=None,
                  identifier=None,
-                 key=None,
-                 serialized=None):
+                 key=None):
 
         if location and identifier and key:
             self._raw_macaroon = RawMacaroon(
@@ -19,13 +18,33 @@ class Macaroon(object):
                 identifier=convert_to_bytes(identifier),
                 key=convert_to_bytes(key)
             )
-        elif serialized:
-            self._raw_macaroon = RawMacaroon(
-                serialized=convert_to_bytes(serialized)
-            )
         else:
             raise MacaroonInitException(
-                'Must supply either: (location, id, key) or (serialized).'
+                'Must supply all: (location, id, key).'
+            )
+
+    def from_binary(serialized):
+        if serialized:
+            m = Macaroon(location='x', identifier='x', key='x')
+            m._raw_macaroon = RawMacaroon(
+                serialized=convert_to_bytes(serialized)
+            )
+            return m
+        else:
+            raise MacaroonInitException(
+                'Must supply binary serialized macaroon.'
+            )
+
+    def from_json(serialized):
+        if serialized:
+            m = Macaroon(location='x', identifier='x', key='x')
+            m._raw_macaroon = RawMacaroon(
+                json=convert_to_string(serialized)
+            )
+            return m
+        else:
+            raise MacaroonInitException(
+                'Must supply json serialized macaroon.'
             )
 
     @property
@@ -48,7 +67,7 @@ class Macaroon(object):
         return self._raw_macaroon.validate()
 
     def copy(self):
-        return Macaroon(serialized=self.serialize())
+        return Macaroon.from_binary(self.serialize())
 
     # Concatenates location, id, all caveats, and signature,
     # and then base64 encodes them

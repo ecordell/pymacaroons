@@ -7,9 +7,9 @@ class Caveat(object):
                  caveatId=None,
                  verificationKeyId=None,
                  location=None):
-        self.caveatId = caveatId
-        self.verificationKeyId = verificationKeyId
-        self.location = location
+        self.caveatId = convert_to_bytes(caveatId)
+        self.verificationKeyId = convert_to_bytes(verificationKeyId)
+        self.location = convert_to_bytes(location)
 
     @property
     def caveatId(self):
@@ -40,3 +40,11 @@ class Caveat(object):
 
     def third_party(self):
         return self._verificationKeyId is not None
+
+    def to_dict(self):
+        serialized = {
+            'cid': self.caveatId,
+            'vid': self.verificationKeyId,
+            'cl': self.location
+        }
+        return serialized
