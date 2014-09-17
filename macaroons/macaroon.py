@@ -23,6 +23,7 @@ class Macaroon(object):
                 'Must supply all: (location, id, key).'
             )
 
+    @staticmethod
     def from_binary(serialized):
         if serialized:
             m = Macaroon(location='x', identifier='x', key='x')
@@ -35,6 +36,7 @@ class Macaroon(object):
                 'Must supply binary serialized macaroon.'
             )
 
+    @staticmethod
     def from_json(serialized):
         if serialized:
             m = Macaroon(location='x', identifier='x', key='x')
