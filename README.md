@@ -51,7 +51,7 @@ serialized = m.serialize()
 
 
 # Some time later, the service recieves the macaroon and must verify it
-n = Macaroon(serialized=serialized)
+n = Macaroon.from_binary(serialized)
 
 v = Verifier()
 
@@ -86,12 +86,15 @@ Compatible with Python 2 and 3. CI builds are generated for 2.6, 2.7, 3.3 and 3.
 
 The [libmacaroons library](https://github.com/rescrv/libmacaroons) comes with Python and Go bindings, but PyMacaroons is implemented directly in Python for further portability and ease of installation. Benchmarks coming, but some speed tradeoffs are expected.
 
-Both PyMacaroons and libmacaroons use the same underlying cryptographic library (libsodium).
+The [Ruby-Macaroons](https://github.com/localmed/ruby-macaroons) library is available for Rubyists. PyMacaroons and Ruby-Macaroons are completely compatible (they can be used interchangibly within the same target service).
+
+PyMacaroons, libmacaroons, and Ruby-Macaroons all use the same underlying cryptographic library (libsodium).
 
 ## References and Further Reading
 
 - [The Macaroon Paper](http://research.google.com/pubs/pub41892.html)
 - [Mozilla Macaroon Tech Talk](https://air.mozilla.org/macaroons-cookies-with-contextual-caveats-for-decentralized-authorization-in-the-cloud/)
 - [libmacaroons](https://github.com/rescrv/libmacaroons)
+- [Ruby-Macaroons](https://github.com/localmed/ruby-macaroons)
 - [libnacl](https://github.com/saltstack/libnacl)
 
