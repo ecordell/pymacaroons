@@ -1,4 +1,5 @@
 import hmac
+import binascii
 from base64 import standard_b64decode
 
 from libnacl.secret import SecretBox
@@ -12,13 +13,18 @@ from macaroons.exceptions import (MacaroonInvalidSignatureException,
 from macaroons.utils import (convert_to_bytes,
                              convert_to_string,
                              truncate_or_pad,
-                             equals)
+                             equals,
+                             generate_derived_key,
+                             hmac_digest,
+                             sign_first_party_caveat,
+                             sign_third_party_caveat)
 
 
 class Verifier(object):
 
     predicates = []
     callbacks = []
+    calculated_signature = None
 
     def satisfy_exact(self, predicate):
         if predicate is None:
@@ -31,57 +37,46 @@ class Verifier(object):
         self.callbacks.append(func)
 
     def verify(self, macaroon, key, discharge_macaroons=None):
-        compare_macaroon = RawMacaroon(
-            location=convert_to_bytes(macaroon.location),
-            identifier=convert_to_bytes(macaroon.identifier),
-            key=convert_to_bytes(key)
-        )
-
-        self._verify_caveats(
-            macaroon._raw_macaroon,
-            compare_macaroon,
+        key = generate_derived_key(convert_to_bytes(key))
+        return self.verify_discharge(
+            macaroon,
+            macaroon,
+            key,
             discharge_macaroons
         )
 
-        if not self._signatures_match(
-                macaroon._raw_macaroon, compare_macaroon):
-            raise MacaroonInvalidSignatureException('Signatures do not match.')
-
-        return True
-
-    # Discharge macaroons are bound to the root,
-    # extra steps to calculate the signature
     def verify_discharge(self, root, macaroon, key, discharge_macaroons=None):
-        compare_macaroon = RawMacaroon(
-            location=convert_to_bytes(macaroon.location),
-            identifier=convert_to_bytes(macaroon.identifier),
-            signature=macaroon._raw_macaroon._macaroon_hmac(
-                convert_to_bytes(key),
-                convert_to_bytes(macaroon.identifier)
-            )
+        self.calculated_signature = hmac_digest(
+            key, convert_to_bytes(macaroon.identifier)
         )
 
-        self._verify_caveats(macaroon, compare_macaroon, discharge_macaroons)
+        self._verify_caveats(macaroon, discharge_macaroons)
 
-        compare_macaroon = root.prepare_for_request(compare_macaroon)
+        if root != macaroon:
+            self.calculated_signature = binascii.unhexlify(
+                root._raw_macaroon._bind_signature(
+                    binascii.hexlify(self.calculated_signature)
+                )
+            )
 
-        if not self._signatures_match(macaroon, compare_macaroon):
+        if not self._signatures_match(
+            macaroon.signature,
+            binascii.hexlify(self.calculated_signature)
+        ):
             raise MacaroonInvalidSignatureException('Signatures do not match.')
 
         return True
 
-    def _verify_caveats(self, macaroon, compare_macaroon, discharge_macaroons):
+    def _verify_caveats(self, macaroon, discharge_macaroons):
         for caveat in macaroon.caveats:
             if caveat.first_party():
                 caveatMet = self._verify_first_party_caveat(
-                    caveat,
-                    compare_macaroon
+                    caveat
                 )
             else:
                 caveatMet = self._verify_third_party_caveat(
                     caveat,
                     macaroon,
-                    compare_macaroon,
                     discharge_macaroons
                 )
 
@@ -90,7 +85,7 @@ class Verifier(object):
                     'Caveat not met. Unable to satisify: ' + caveat.caveatId
                 )
 
-    def _verify_first_party_caveat(self, caveat, compare_macaroon):
+    def _verify_first_party_caveat(self, caveat):
         caveatMet = False
         if caveat.caveatId in self.predicates:
             caveatMet = True
@@ -99,13 +94,18 @@ class Verifier(object):
                 if callback(caveat.caveatId):
                     caveatMet = True
         if caveatMet:
-            compare_macaroon.add_first_party_caveat(caveat._caveatId)
+            encode_key = self.calculated_signature
+            self.calculated_signature = binascii.unhexlify(
+                sign_first_party_caveat(
+                    encode_key,
+                    convert_to_bytes(caveat.caveatId)
+                )
+            )
         return caveatMet
 
     def _verify_third_party_caveat(self,
                                    caveat,
                                    root_macaroon,
-                                   compare_macaroon,
                                    discharge_macaroons):
         caveatMet = False
 
@@ -119,7 +119,7 @@ class Verifier(object):
                 + caveat.caveatId
             )
 
-        caveat_key, nonce = self._extract_caveat_key(compare_macaroon, caveat)
+        caveat_key = self._extract_caveat_key(caveat)
 
         caveat_macaroon_verifier = Verifier()
         caveat_macaroon_verifier.predicates = self.predicates
@@ -132,26 +132,27 @@ class Verifier(object):
             discharge_macaroons
         )
         if caveatMet:
-            compare_macaroon._add_third_party_caveat_direct(
-                caveat._location,
-                caveat_key,
-                caveat._caveatId,
-                nonce=nonce
+            encode_key = self.calculated_signature
+            self.calculated_signature = binascii.unhexlify(
+                sign_third_party_caveat(
+                    encode_key,
+                    convert_to_bytes(caveat.verificationKeyId),
+                    convert_to_bytes(caveat.caveatId)
+                )
             )
         return caveatMet
 
-    def _extract_caveat_key(self, compare_macaroon, caveat):
-        key = truncate_or_pad(compare_macaroon.signature)
+    def _extract_caveat_key(self, caveat):
+        key = truncate_or_pad(self.calculated_signature)
         box = SecretBox(key=key)
         decoded_vid = standard_b64decode(caveat.verificationKeyId)
-        nonce = decoded_vid[:crypto_secretbox_NONCEBYTES]
         decrypted = box.decrypt(decoded_vid)
-        return decrypted, nonce
+        return decrypted
 
-    def _signatures_match(self, m1, m2):
+    def _signatures_match(self, s1, s2):
         # uses a constant-time compare
-        sig1 = convert_to_bytes(m1.signature)
-        sig2 = convert_to_bytes(m2.signature)
+        sig1 = convert_to_bytes(s1)
+        sig2 = convert_to_bytes(s2)
         if PY3:
             return hmac.compare_digest(sig1, sig2)
         else:

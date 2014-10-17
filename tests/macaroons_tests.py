@@ -140,7 +140,7 @@ never use the same secret twice'
         )
         assert_equal(
             m.signature,
-            '39420840b3a0ac50340cd235c3a77ecb11dcbc2e5d0145f60796a56d378bd997'
+            '3cd1effbec018d6cbc1d17384d4924e3a708f25c2c0404d1a6af4f0578867fd0'
         )
 
     def test_serializing_macaroon_with_first_and_third_caveats(self):
@@ -191,7 +191,7 @@ never use the same secret twice'
         protected = m.prepare_for_request(discharge)
         assert_equal(
             protected.signature,
-            '4eb7f2b310a302fa998a884055b4bd1b86e764a2ddf4e8c806579ec855328965'
+            '753236901d08e9610506e09ec04fb61313bae04ad6b1babf4c44de7fe56afbc1'
         )
 
     def test_verify_third_party_caveats(self):
