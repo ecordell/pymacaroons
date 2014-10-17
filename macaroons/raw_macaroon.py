@@ -1,10 +1,9 @@
 from __future__ import unicode_literals
 
-import hmac
 import binascii
 import struct
 import json
-from hashlib import sha256
+
 from base64 import standard_b64encode, urlsafe_b64decode, urlsafe_b64encode
 
 from libnacl.secret import SecretBox
@@ -12,7 +11,11 @@ from libnacl.secret import SecretBox
 from macaroons.caveat import Caveat
 from macaroons.utils import (truncate_or_pad,
                              convert_to_bytes,
-                             convert_to_string)
+                             convert_to_string,
+                             generate_derived_key,
+                             hmac_digest,
+                             sign_first_party_caveat,
+                             sign_third_party_caveat)
 
 
 class RawMacaroon(object):
@@ -160,8 +163,6 @@ class RawMacaroon(object):
 
     def _deserialize_json(self, data):
         deserialized = json.loads(convert_to_string(data))
-        print(deserialized)
-        print(self)
         self._location = deserialized['location']
         self._identifier = deserialized['identifier']
         for c in deserialized['caveats']:
@@ -203,11 +204,7 @@ class RawMacaroon(object):
     # the wrong location by binding to the root macaroon
     def prepare_for_request(self, macaroon):
         protected = macaroon.copy()
-        protected._signature = self._macaroon_hmac_concat(
-            b'\0',
-            self.signature,
-            macaroon.signature
-        )
+        protected._signature = self._bind_signature(macaroon.signature)
         return protected
 
     # The existing macaroon signature is the key for hashing the
@@ -217,7 +214,7 @@ class RawMacaroon(object):
         caveat = Caveat(caveatId=predicate)
         self._caveats.append(caveat)
         encode_key = binascii.unhexlify(self.signature)
-        self._signature = self._macaroon_hmac(encode_key, predicate)
+        self._signature = sign_first_party_caveat(encode_key, predicate)
         return self
 
     # The third party caveat key is encrypted useing the current signature, and
@@ -225,7 +222,7 @@ class RawMacaroon(object):
     # is the key for hashing the string (verificationId + caveatId).
     # This new hash becomes the signature of the macaroon with caveat added.
     def add_third_party_caveat(self, location, key, key_id):
-        derived_key = truncate_or_pad(self._generate_derived_key(key))
+        derived_key = truncate_or_pad(generate_derived_key(key))
         self._add_third_party_caveat_direct(
             location,
             derived_key,
@@ -239,7 +236,7 @@ class RawMacaroon(object):
                                        key,
                                        key_id,
                                        nonce=None):
-        old_key = truncate_or_pad(self.signature)
+        old_key = truncate_or_pad(binascii.unhexlify(self.signature))
         box = SecretBox(key=old_key)
         encrypted = box.encrypt(key, nonce=nonce)
         verificationKeyId = standard_b64encode(encrypted)
@@ -250,54 +247,40 @@ class RawMacaroon(object):
         )
         self._caveats.append(caveat)
         encode_key = binascii.unhexlify(self.signature)
-        self._signature = self._macaroon_hmac_concat(
+        self._signature = sign_third_party_caveat(
             encode_key,
             caveat._verificationKeyId,
             caveat._caveatId
         )
         return self
 
+    def _bind_signature(self, signature):
+        bound = self._macaroon_hmac_concat(
+            truncate_or_pad(b'0'),
+            self.signature,
+            signature
+        )
+        return bound
+
     # Hashes two strings, then concatenates them and hashes the combined
     # string
     def _macaroon_hmac_concat(self, key, data1, data2):
-        hash1 = hmac.new(
-            key,
-            msg=data1,
-            digestmod=sha256
-        ).digest()
-        hash2 = hmac.new(
-            key,
-            msg=data2,
-            digestmod=sha256
-        ).digest()
+        hash1 = hmac_digest(key, binascii.unhexlify(data1))
+        hash2 = hmac_digest(key, binascii.unhexlify(data2))
         combined = hash1 + hash2
-        return hmac.new(
-            key,
-            msg=combined,
-            digestmod=sha256
-        ).hexdigest().encode('ascii')
+        return self._macaroon_hmac(
+            key, combined
+        )
 
     # Given a high-entropy root key _key and an identifier id, this returns
     # a valid signature sig = MAC(k, id).
     def _create_initial_macaroon_signature(self, key):
-        derived_key = self._generate_derived_key(key)
+        derived_key = generate_derived_key(key)
         return self._macaroon_hmac(derived_key, self._identifier)
 
-    def _generate_derived_key(self, key):
-        generator_key = b'macaroons-key-generator'
-        derived_key = self._hmac(generator_key, key)
-        return derived_key
-
     def _macaroon_hmac(self, key, data):
-        dig = self._hmac(key, data)
+        dig = hmac_digest(key, data)
         return binascii.hexlify(dig)
-
-    def _hmac(self, key, data):
-        return hmac.new(
-            key,
-            msg=data,
-            digestmod=sha256
-        ).digest()
 
     def _packetize(self, key, data):
         PACKET_PREFIX_LENGTH = 4
