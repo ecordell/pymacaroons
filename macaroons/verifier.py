@@ -22,9 +22,10 @@ from macaroons.utils import (convert_to_bytes,
 
 class Verifier(object):
 
-    predicates = []
-    callbacks = []
-    calculated_signature = None
+    def __init__(self):
+        self.predicates = []
+        self.callbacks = []
+        self.calculated_signature = None
 
     def satisfy_exact(self, predicate):
         if predicate is None:
