@@ -1,8 +1,5 @@
-VERSION = (0, 4, 1)
-__version__ = '.'.join(str(x) for x in VERSION)
+__author__ = 'Evan Cordell'
 
-
-__all__ = [
-    'VERSION',
-    '__version__',
-]
+__version__ = "0.4.1"
+__version_info__ = tuple(__version__.split('.'))
+__short_version__ = __version__
