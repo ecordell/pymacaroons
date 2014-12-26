@@ -176,18 +176,18 @@ class RawMacaroon(object):
         return self
 
     def inspect(self):
-        combined = 'location' + ' ' + self.location + '\n'
-        combined += 'identifier' + ' ' + self.identifier + '\n'
+        combined = 'location' + ' ' + convert_to_string(self.location) + '\n'
+        combined += 'identifier' + ' ' + convert_to_string(self.identifier) + '\n'
 
         for caveat in self.caveats:
-            combined += 'cid' + ' ' + caveat.caveatId + '\n'
+            combined += 'cid' + ' ' + convert_to_string(caveat.caveatId) + '\n'
 
             if caveat.verificationKeyId and caveat.location:
                 combined += 'vid' + ' ' + \
-                    caveat._verificationKeyId.decode('ascii') + '\n'
-                combined += 'cl' + ' ' + caveat.location + '\n'
+                    convert_to_string(caveat._verificationKeyId) + '\n'
+                combined += 'cl' + ' ' + convert_to_string(caveat.location) + '\n'
 
-        combined += 'signature' + ' ' + self._signature.decode('ascii')
+        combined += 'signature' + ' ' + convert_to_string(self._signature)
         return combined
 
     # TODO
