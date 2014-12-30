@@ -84,7 +84,7 @@ print(m.inspect())
 ```
 
 ### Verifying Macaroon
-```
+```python
 # Some time later, the service recieves the macaroon and must verify it
 n = Macaroon.from_binary("MDAyZWxvY2F0aW9uIGNvb2wtcGljdHVyZS1zZXJ2aWNlLmV4YW1wbGUuY29tCjAwMWJpZGVudGlmaWVyIGtleS1mb3ItYm9iCjAwMjdjaWQgcGljdHVyZV9pZCA9IGJvYnNfY29vbF9jYXQuanBnCjAwMmZzaWduYXR1cmUgg9j6KAsJk408_-BFY09UT_r3Ev8sUaw0goropCsnf48K")
 
