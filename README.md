@@ -101,9 +101,9 @@ def picture_access_validator(predicate):
     
 # The verifier is informed of all relevant contextual information needed
 # to verify incoming macaroons
-v.satisfy_general(general_caveat_validator)
+v.satisfy_general(picture_access_validator)
 
-# Note that in this case, the general_caveat_validator() is just checking
+# Note that in this case, the picture_access_validator() is just checking
 # equality. This is equivalent to a satisfy_exact call, which just checks for
 # string equality
 v.satisfy_exact('picture_id = bobs_cool_cat.jpg')
