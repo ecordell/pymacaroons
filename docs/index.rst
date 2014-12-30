@@ -6,7 +6,7 @@
 .. comment: split here
 
 PyMacaroons
-========
+===========
 
 PyMacaroons is a Python implementation of Macaroons. *They're better than cookies!*
 
