@@ -1,4 +1,3 @@
-import hmac
 import binascii
 from base64 import standard_b64decode
 
@@ -9,10 +8,7 @@ except ImportError:
     compare_digest = None
 
 from libnacl.secret import SecretBox
-from libnacl import crypto_secretbox_NONCEBYTES
 
-from macaroons.macaroon import Macaroon
-from macaroons.raw_macaroon import RawMacaroon
 from macaroons.exceptions import (MacaroonInvalidSignatureException,
                                   MacaroonUnmetCaveatException)
 from macaroons.utils import (convert_to_bytes,
