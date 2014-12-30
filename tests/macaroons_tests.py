@@ -86,6 +86,17 @@ key", "signature": "197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c2\
             '197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67'
         )
 
+    def test_serializing_deserializing_json(self):
+        m = Macaroon(
+            location='http://test/',
+            identifier='first',
+            key='secret_key_1'
+        )
+        m.add_first_party_caveat('test = caveat')
+        m.serialize_json()
+        n = Macaroon.from_json(m.serialize_json())
+        assert_equal(m.signature, n.signature)
+
     def test_verify_first_party_exact_caveats(self):
         m = Macaroon(
             location='http://mybank/',

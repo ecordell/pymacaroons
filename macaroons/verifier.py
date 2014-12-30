@@ -2,9 +2,14 @@ import hmac
 import binascii
 from base64 import standard_b64decode
 
+try:
+    # py2.7.7+ and py3.3+ have native comparison support
+    from hmac import compare_digest
+except ImportError:
+    compare_digest = None
+
 from libnacl.secret import SecretBox
 from libnacl import crypto_secretbox_NONCEBYTES
-from six import PY3
 
 from macaroons.macaroon import Macaroon
 from macaroons.raw_macaroon import RawMacaroon
@@ -146,15 +151,17 @@ class Verifier(object):
     def _extract_caveat_key(self, caveat):
         key = truncate_or_pad(self.calculated_signature)
         box = SecretBox(key=key)
-        decoded_vid = standard_b64decode(caveat.verificationKeyId)
+        decoded_vid = standard_b64decode(
+            convert_to_bytes(caveat.verificationKeyId)
+        )
         decrypted = box.decrypt(decoded_vid)
         return decrypted
 
     def _signatures_match(self, s1, s2):
         # uses a constant-time compare
-        sig1 = convert_to_bytes(s1)
-        sig2 = convert_to_bytes(s2)
-        if PY3:
-            return hmac.compare_digest(sig1, sig2)
+        sig1 = convert_to_string(s1)
+        sig2 = convert_to_string(s2)
+        if compare_digest is not None:
+            return compare_digest(sig1, sig2)
         else:
             return equals(sig1, sig2)
