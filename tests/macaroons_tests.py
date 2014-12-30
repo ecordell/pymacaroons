@@ -236,3 +236,14 @@ never use the same secret twice',
             discharge_macaroons=[protected]
         )
         assert_true(verified)
+
+    def test_inspect(self):
+        m = Macaroon(
+            location='http://mybank/',
+            identifier='we used our secret key',
+            key='this is our super secret key; only we should know it'
+        )
+        m.add_first_party_caveat('test = caveat')
+        assert_equal(m.inspect(), 'location http://mybank/\nidentifier we used\
+ our secret key\ncid test = caveat\nsignature 197bac7a044af33332865b9266e26d49\
+3bdd668a660e44d88ce1a998c23dbd67')
