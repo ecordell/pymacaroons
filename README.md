@@ -90,7 +90,7 @@ n = Macaroon.from_binary("MDAyZWxvY2F0aW9uIGNvb2wtcGljdHVyZS1zZXJ2aWNlLmV4YW1wbG
 
 v = Verifier()
 
-# General caveats are verified by an arbitrary functions
+# General caveats are verified by arbitrary functions
 # that return false if the caveat is not met
 # and true if it is met or not understood
 def picture_access_validator(predicate):
