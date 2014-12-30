@@ -28,50 +28,94 @@ To install PyMacaroons:
 
 ## Quickstart
 
+### Create a Macaroon
+
 ```python
 from macaroons.macaroon import Macaroon
 from macaroons.verifier import Verifier
 
+# Keys for signing macaroons are associated with some identifier for later 
+# verification. This could be stored in a database, key value store, 
+# memory, etc.
 keys = {
-    'secret_key_1': 'a very secret key, used to sign the macaroon'
+    'key-for-bob': 'asdfasdfas-a-very-secret-signing-key'
 }
+
 # Construct a Macaroon. The location and identifier will be visible after
 # construction, and identify which service and key to use to verify it.
 m = Macaroon(
-    location='http://mybank/',
-    identifier='secret_key_1',
-    key=keys['secret_key_1']
+    location='cool-picture-service.example.com',
+    identifier='key-for-bob',
+    key=keys['key-for-bob']
 )
 
 # Add a caveat for the target service
-m.add_first_party_caveat('general caveat')
+m.add_first_party_caveat('picture_id = bobs_cool_cat.jpg')
 
 # Serialize for transport in a cookie, url, OAuth token, etc
 serialized = m.serialize()
 
+print(serialized)
+# MDAyZWxvY2F0aW9uIGNvb2wtcGljdHVyZS1zZXJ2aWNlLmV4YW1wbGUuY29tCjAwMWJpZGVudGlmaWVyIGtleS1mb3ItYm9iCjAwMjdjaWQgcGljdHVyZV9pZCA9IGJvYnNfY29vbF9jYXQuanBnCjAwMmZzaWduYXR1cmUgg9j6KAsJk408_-BFY09UT_r3Ev8sUaw0goropCsnf48K
 
+# Serialize in json form
+serialized_json = m.serialize_json()
+
+print(serialized_json)
+# {
+#    "identifier": "key-for-bob",
+#    "caveats": [
+#        {
+#            "cl": null,
+#            "vid": null,
+#            "cid": "picture_id = bobs_cool_cat.jpg"
+#        }
+#    ],
+#    "location": "cool-picture-service.example.com",
+#    "signature": "83d8fa280b09938d3cffe045634f544ffaf712ff2c51ac34828ae8a42b277f8f"
+# }
+
+# Inspect Macaroon (useful for debugging)
+print(m.inspect())
+# location cool-picture-service.example.com
+# identifier key-for-bob
+# cid picture_id = bobs_cool_cat.jpg
+# signature 83d8fa280b09938d3cffe045634f544ffaf712ff2c51ac34828ae8a42b277f8f
+```
+
+### Verifying Macaroon
+```
 # Some time later, the service recieves the macaroon and must verify it
-n = Macaroon.from_binary(serialized)
+n = Macaroon.from_binary("MDAyZWxvY2F0aW9uIGNvb2wtcGljdHVyZS1zZXJ2aWNlLmV4YW1wbGUuY29tCjAwMWJpZGVudGlmaWVyIGtleS1mb3ItYm9iCjAwMjdjaWQgcGljdHVyZV9pZCA9IGJvYnNfY29vbF9jYXQuanBnCjAwMmZzaWduYXR1cmUgg9j6KAsJk408_-BFY09UT_r3Ev8sUaw0goropCsnf48K")
 
 v = Verifier()
 
 # General caveats are verified by an arbitrary functions
-def general_caveat_validator(predicate):
-    return predicate == 'general caveat'
+# that return false if the caveat is not met
+# and true if it is met or not understood
+def picture_access_validator(predicate):
+    # in this case, predicate = 'picture_id = bobs_cool_cat.jpg'
+    if predicate.split(' = ')[0] != 'picture_id':
+        return True
+    return predicate.split(' = ')[1] == 'bobs_cool_cat.jpg'
     
 # The verifier is informed of all relevant contextual information needed
 # to verify incoming macaroons
 v.satisfy_general(general_caveat_validator)
 
 # Note that in this case, the general_caveat_validator() is just checking
-# equality. This is equivalent to:
-v.satisfy_exact('general caveat')
+# equality. This is equivalent to a satisfy_exact call, which just checks for
+# string equality
+v.satisfy_exact('picture_id = bobs_cool_cat.jpg')
 
 # Verify the macaroon using the key matching the macaroon identifier
 verified = v.verify(
     n,
     keys[n.identifier]
 )
+
+# if verified is True, the macaroon was untampered (signatures matched) AND 
+# all caveats were met
 ```
 
 ## Documentation
@@ -80,13 +124,25 @@ The latest documentation can always be found on [ReadTheDocs](http://pymacaroons
 
 ## Python notes
 
-Compatible with Python 2 and 3. CI builds are generated for 2.6, 2.7, 3.3 and 3.4. May be compatible with other versions (or may require tweaking - feel free to contribute!)
+Compatible with Python 2 and 3. CI builds are generated for 2.6, 2.7, 3.3 and 3.4, as well as PyPy and PyPy3. May be compatible with other versions (or may require tweaking - feel free to contribute!)
+
+## Running Tests
+
+To run the tests:
+
+`tox`
+
+To run against a specific version of Python:
+
+`tox -e py34`
+
+[tox](https://tox.readthedocs.org/en/latest/index.html) is used for running tests locally against multiple versions of Python. Tests will only run against versions available to tox. 
 
 ## More Macaroons
 
 The [libmacaroons library](https://github.com/rescrv/libmacaroons) comes with Python and Go bindings, but PyMacaroons is implemented directly in Python for further portability and ease of installation. Benchmarks coming, but some speed tradeoffs are expected.
 
-The [Ruby-Macaroons](https://github.com/localmed/ruby-macaroons) library is available for Rubyists. PyMacaroons and Ruby-Macaroons are completely compatible (they can be used interchangibly within the same target service).
+The [Ruby-Macaroons](https://github.com/localmed/ruby-macaroons) library is available for Ruby. PyMacaroons and Ruby-Macaroons are completely compatible (they can be used interchangibly within the same target service).
 
 PyMacaroons, libmacaroons, and Ruby-Macaroons all use the same underlying cryptographic library (libsodium).
 
