@@ -22,7 +22,7 @@ setup(
     description='Macaroon library for Python',
     author='Evan Cordell',
     author_email='evan.cordell@localmed.com',
-    url='',
+    url='https://github.com/ecordell/pymacaroons',
     license='MIT',
     packages=find_packages(exclude=['tests', 'tests.*']),
     include_package_data=True,
