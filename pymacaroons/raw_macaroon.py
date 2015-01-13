@@ -8,14 +8,14 @@ from base64 import standard_b64encode, urlsafe_b64decode, urlsafe_b64encode
 
 from libnacl.secret import SecretBox
 
-from macaroons.caveat import Caveat
-from macaroons.utils import (truncate_or_pad,
-                             convert_to_bytes,
-                             convert_to_string,
-                             generate_derived_key,
-                             hmac_digest,
-                             sign_first_party_caveat,
-                             sign_third_party_caveat)
+from pymacaroons.caveat import Caveat
+from pymacaroons.utils import (truncate_or_pad,
+                               convert_to_bytes,
+                               convert_to_string,
+                               generate_derived_key,
+                               hmac_digest,
+                               sign_first_party_caveat,
+                               sign_third_party_caveat)
 
 
 class RawMacaroon(object):

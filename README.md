@@ -30,8 +30,7 @@ To install PyMacaroons:
 ### Create a Macaroon
 
 ```python
-from macaroons.macaroon import Macaroon
-from macaroons.verifier import Verifier
+from pymacaroons import Macaroon, Verifier
 
 # Keys for signing macaroons are associated with some identifier for later 
 # verification. This could be stored in a database, key value store, 

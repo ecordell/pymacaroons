@@ -5,9 +5,8 @@ from mock import *
 from nose.tools import *
 
 
-from macaroons.macaroon import Macaroon
-from macaroons.verifier import Verifier
-from macaroons.utils import *
+from pymacaroons import Macaroon, Verifier
+from pymacaroons.utils import *
 
 
 class TestMacaroon(object):

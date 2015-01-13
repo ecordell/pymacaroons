@@ -1,8 +1,8 @@
 from __future__ import unicode_literals
 
-from macaroons.raw_macaroon import RawMacaroon
-from macaroons.exceptions import MacaroonInitException
-from macaroons.utils import convert_to_bytes, convert_to_string
+from pymacaroons.raw_macaroon import RawMacaroon
+from pymacaroons.exceptions import MacaroonInitException
+from pymacaroons.utils import convert_to_bytes, convert_to_string
 
 
 class Macaroon(object):

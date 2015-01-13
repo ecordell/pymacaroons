@@ -9,16 +9,16 @@ except ImportError:
 
 from libnacl.secret import SecretBox
 
-from macaroons.exceptions import (MacaroonInvalidSignatureException,
-                                  MacaroonUnmetCaveatException)
-from macaroons.utils import (convert_to_bytes,
-                             convert_to_string,
-                             truncate_or_pad,
-                             equals,
-                             generate_derived_key,
-                             hmac_digest,
-                             sign_first_party_caveat,
-                             sign_third_party_caveat)
+from pymacaroons.exceptions import (MacaroonInvalidSignatureException,
+                                    MacaroonUnmetCaveatException)
+from pymacaroons.utils import (convert_to_bytes,
+                               convert_to_string,
+                               truncate_or_pad,
+                               equals,
+                               generate_derived_key,
+                               hmac_digest,
+                               sign_first_party_caveat,
+                               sign_third_party_caveat)
 
 
 class Verifier(object):

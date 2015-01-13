@@ -1,4 +1,4 @@
-from macaroons.macaroon import Macaroon
+from pymacaroons.macaroon import Macaroon
 
 
 def test():

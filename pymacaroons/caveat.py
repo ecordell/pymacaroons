@@ -1,4 +1,4 @@
-from macaroons.utils import convert_to_string, convert_to_bytes
+from pymacaroons.utils import convert_to_string, convert_to_bytes
 
 
 class Caveat(object):

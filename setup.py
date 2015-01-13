@@ -4,7 +4,7 @@ import sys
 from setuptools import find_packages, setup
 
 
-version = __import__('macaroons').__version__
+version = __import__('pymacaroons').__version__
 
 
 def read_file(*paths):
@@ -21,7 +21,7 @@ setup(
     version=version,
     description='Macaroon library for Python',
     author='Evan Cordell',
-    author_email='evan.cordell@localmed.com',
+    author_email='cordell.evan@gmail.com',
     url='https://github.com/ecordell/pymacaroons',
     license='MIT',
     packages=find_packages(exclude=['tests', 'tests.*']),

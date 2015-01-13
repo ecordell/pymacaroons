@@ -20,8 +20,8 @@ Install PyMacaroons by running:
 Contribute
 ----------
 
-- Issue Tracker: github.com/ecordell/pymacaroons/issues
-- Source Code: github.com/ecordell/pymacaroons
+- Issue Tracker: [github.com/ecordell/macaroon/issues](https://github.com/ecordell/macaroon/issues)
+- Source Code: [github.com/ecordell/macaroon](https://github.com/ecordell/macaroon)
 
 License
 -------
