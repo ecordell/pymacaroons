@@ -4,9 +4,6 @@ import sys
 from setuptools import find_packages, setup
 
 
-version = __import__('pymacaroons').__version__
-
-
 def read_file(*paths):
     here = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(here, *paths)) as f:
@@ -18,7 +15,7 @@ long_description = long_description.strip().split('split here', 2)[1][:-12]
 
 setup(
     name='pymacaroons',
-    version=version,
+    version="0.5.0",
     description='Macaroon library for Python',
     author='Evan Cordell',
     author_email='cordell.evan@gmail.com',
