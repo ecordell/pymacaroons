@@ -23,8 +23,8 @@ Contribute
 - `Issue Tracker`_
 - `Source Code`_
 
-.. _Issue Tracker: https://github.com/ecordell/macaroon/issues
-.. _Source Code: https://github.com/ecordell/macaroon
+.. _Issue Tracker: https://github.com/ecordell/pymacaroons/issues
+.. _Source Code: https://github.com/ecordell/pymacaroons
 
 License
 -------
