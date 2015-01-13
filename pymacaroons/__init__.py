@@ -7,3 +7,9 @@ __short_version__ = __version__
 from .macaroon import Macaroon
 from .caveat import Caveat
 from .verifier import Verifier
+
+__all__ = [
+    'Macaroon',
+    'Caveat',
+    'Verifier',
+]
