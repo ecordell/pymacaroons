@@ -28,7 +28,9 @@ class Macaroon(object):
         if serialized:
             m = Macaroon(location='x', identifier='x', key='x')
             m._raw_macaroon = RawMacaroon(
-                serialized=convert_to_bytes(serialized)
+                serialized=convert_to_bytes(
+                    serialized + "=" * (-len(serialized) % 4)
+                )
             )
             return m
         else:
