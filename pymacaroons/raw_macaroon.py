@@ -258,7 +258,7 @@ class RawMacaroon(object):
 
     def _bind_signature(self, signature):
         bound = self._macaroon_hmac_concat(
-            truncate_or_pad(b'0'),
+            truncate_or_pad(b'\0'),
             self.signature,
             signature
         )

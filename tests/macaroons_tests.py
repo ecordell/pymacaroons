@@ -202,7 +202,7 @@ never use the same secret twice'
         protected = m.prepare_for_request(discharge)
         assert_equal(
             protected.signature,
-            '753236901d08e9610506e09ec04fb61313bae04ad6b1babf4c44de7fe56afbc1'
+            '6845dd44f24c8483e1a2b63a4d97e2670fd7d2564371a9ed64cf0b935834f84d'
         )
 
     def test_verify_third_party_caveats(self):
