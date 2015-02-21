@@ -16,3 +16,7 @@ class MacaroonInvalidSignatureException(MacaroonVerificationFailedException):
 
 class MacaroonUnmetCaveatException(MacaroonVerificationFailedException):
     pass
+
+
+class MacaroonDeserializationException(MacaroonException):
+    pass

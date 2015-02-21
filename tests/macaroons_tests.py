@@ -4,7 +4,7 @@ import json
 from mock import *
 from nose.tools import *
 
-
+from libnacl import crypto_box_NONCEBYTES
 from pymacaroons import Macaroon, Verifier
 from pymacaroons.utils import *
 
@@ -133,7 +133,6 @@ key", "signature": "197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c2\
     @patch('libnacl.secret.libnacl.utils.rand_nonce')
     def test_third_party_caveat(self, rand_nonce):
         # use a fixed nonce to ensure the same signature
-        from libnacl import crypto_box_NONCEBYTES
         rand_nonce.return_value = truncate_or_pad(
             b'\0',
             size=crypto_box_NONCEBYTES
@@ -174,7 +173,13 @@ never use the same secret twice'
             n.signature
         )
 
-    def test_prepare_for_request(self):
+    @patch('libnacl.secret.libnacl.utils.rand_nonce')
+    def test_prepare_for_request(self, rand_nonce):
+        # use a fixed nonce to ensure the same signature
+        rand_nonce.return_value = truncate_or_pad(
+            b'\0',
+            size=crypto_box_NONCEBYTES
+        )
         m = Macaroon(
             location='http://mybank/',
             identifier='we used our other secret key',
@@ -185,12 +190,10 @@ never use the same secret twice'
         caveat_key = '4; guaranteed random by a fair toss of the dice'
         predicate = 'user = Alice'
         identifier = 'this was how we remind auth of key/pred'
-        # use a fixed nonce to ensure the same signature
-        m._raw_macaroon._add_third_party_caveat_direct(
+        m.add_third_party_caveat(
             'http://auth.mybank/',
             caveat_key.encode('ascii'),
-            identifier,
-            nonce=truncate_or_pad(b'\0', size=24)
+            identifier
         )
 
         discharge = Macaroon(
@@ -202,7 +205,7 @@ never use the same secret twice'
         protected = m.prepare_for_request(discharge)
         assert_equal(
             protected.signature,
-            '6845dd44f24c8483e1a2b63a4d97e2670fd7d2564371a9ed64cf0b935834f84d'
+            'b38b26ab29d3724e728427e758cccc16d9d7f3de46d0d811b70b117b05357b9b'
         )
 
     def test_verify_third_party_caveats(self):
