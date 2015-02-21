@@ -15,7 +15,7 @@ long_description = long_description.strip().split('split here', 2)[1][:-12]
 
 setup(
     name='pymacaroons',
-    version="0.5.6",
+    version="0.6.0",
     description='Macaroon library for Python',
     author='Evan Cordell',
     author_email='cordell.evan@gmail.com',
