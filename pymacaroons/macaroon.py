@@ -1,6 +1,9 @@
 from __future__ import unicode_literals
+import copy
 
 from pymacaroons.raw_macaroon import RawMacaroon
+from pymacaroons.serializers.binary_serializer import BinarySerializer
+from pymacaroons.serializers.json_serializer import JsonSerializer
 from pymacaroons.exceptions import MacaroonInitException
 from pymacaroons.utils import convert_to_bytes, convert_to_string
 
@@ -26,13 +29,7 @@ class Macaroon(object):
     @staticmethod
     def from_binary(serialized):
         if serialized:
-            m = Macaroon(location='x', identifier='x', key='x')
-            m._raw_macaroon = RawMacaroon(
-                serialized=convert_to_bytes(
-                    serialized + "=" * (-len(serialized) % 4)
-                )
-            )
-            return m
+            return BinarySerializer().deserialize(serialized)
         else:
             raise MacaroonInitException(
                 'Must supply binary serialized macaroon.'
@@ -41,11 +38,7 @@ class Macaroon(object):
     @staticmethod
     def from_json(serialized):
         if serialized:
-            m = Macaroon(location='x', identifier='x', key='x')
-            m._raw_macaroon = RawMacaroon(
-                json=convert_to_string(serialized)
-            )
-            return m
+            return JsonSerializer().deserialize(serialized)
         else:
             raise MacaroonInitException(
                 'Must supply json serialized macaroon.'
@@ -67,25 +60,27 @@ class Macaroon(object):
     def caveats(self):
         return self._raw_macaroon.caveats
 
-    def validate(self):
-        return self._raw_macaroon.validate()
-
     def copy(self):
-        return Macaroon.from_binary(self.serialize())
+        return copy.deepcopy(self)
 
     # Concatenates location, id, all caveats, and signature,
     # and then base64 encodes them
     def serialize(self):
-        return self._raw_macaroon.serialize().decode('ascii')
+        return BinarySerializer().serialize(self)
 
     def serialize_json(self):
-        return self._raw_macaroon.serialize_json()
+        return JsonSerializer().serialize(self)
 
     def inspect(self):
-        return self._raw_macaroon.inspect()
-
-    def is_same(self, macaroon):
-        return self._raw_macaroon.is_same(macaroon._raw_macaroon)
+        combined = 'location {loc}\n'.format(loc=self.location)
+        combined += 'identifier {id}\n'.format(id=self.identifier)
+        for caveat in self.caveats:
+            combined += 'cid {cid}\n'.format(cid=caveat.caveatId)
+            if caveat.verificationKeyId and caveat.location:
+                combined += 'vid {vid}\n'.format(vid=caveat.verificationKeyId)
+                combined += 'cl {cl}\n'.format(cl=caveat.location)
+        combined += 'signature {sig}'.format(sig=self.signature)
+        return combined
 
     def first_party_caveats(self):
         return [caveat for caveat in self.caveats if caveat.first_party()]

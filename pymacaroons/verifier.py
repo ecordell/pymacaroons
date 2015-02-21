@@ -3,18 +3,18 @@ from base64 import standard_b64decode
 
 try:
     # py2.7.7+ and py3.3+ have native comparison support
-    from hmac import compare_digest
+    from hmac import compare_digest as constant_time_compare
 except ImportError:
-    compare_digest = None
+    from pymacaroons.utils import equals as constant_time_compare
 
 from libnacl.secret import SecretBox
 
+from pymacaroons.binders import HashSignaturesBinder
 from pymacaroons.exceptions import (MacaroonInvalidSignatureException,
                                     MacaroonUnmetCaveatException)
 from pymacaroons.utils import (convert_to_bytes,
                                convert_to_string,
                                truncate_or_pad,
-                               equals,
                                generate_derived_key,
                                hmac_digest,
                                sign_first_party_caveat,
@@ -35,7 +35,7 @@ class Verifier(object):
 
     def satisfy_general(self, func):
         if not hasattr(func, '__call__'):
-            raise TypeError('General caveat verifiers must be functions.')
+            raise TypeError('General caveat verifiers must be callable.')
         self.callbacks.append(func)
 
     def verify(self, macaroon, key, discharge_macaroons=None):
@@ -56,7 +56,10 @@ class Verifier(object):
 
         if root != macaroon:
             self.calculated_signature = binascii.unhexlify(
-                root._raw_macaroon._bind_signature(
+                # TODO: this should allow setting a custom binder at both the
+                # instance level and the discharge_macaroon level, perhaps
+                # by passing in [(discharge, binder)]
+                HashSignaturesBinder(root).bind_signature(
                     binascii.hexlify(self.calculated_signature)
                 )
             )
@@ -154,10 +157,6 @@ class Verifier(object):
         return decrypted
 
     def _signatures_match(self, s1, s2):
-        # uses a constant-time compare
         sig1 = convert_to_string(s1)
         sig2 = convert_to_string(s2)
-        if compare_digest is not None:
-            return compare_digest(sig1, sig2)
-        else:
-            return equals(sig1, sig2)
+        return constant_time_compare(sig1, sig2)

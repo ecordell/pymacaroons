@@ -52,15 +52,28 @@ def hmac_digest(key, data):
     ).digest()
 
 
+def hmac_hex(key, data):
+    dig = hmac_digest(key, data)
+    return binascii.hexlify(dig)
+
+
+def create_initial_macaroon_signature(key, identifier):
+    derived_key = generate_derived_key(key)
+    return hmac_hex(derived_key, identifier)
+
+
+def hmac_concat(key, data1, data2):
+    hash1 = hmac_digest(key, data1)
+    hash2 = hmac_digest(key, data2)
+    return hmac_hex(key, hash1 + hash2)
+
+
 def sign_first_party_caveat(signature, predicate):
-    return binascii.hexlify(hmac_digest(signature, predicate))
+    return hmac_hex(signature, predicate)
 
 
 def sign_third_party_caveat(signature, verification_id, caveat_id):
-    verification_id_hash = hmac_digest(signature, verification_id)
-    caveat_id_hash = hmac_digest(signature, caveat_id)
-    combined = verification_id_hash + caveat_id_hash
-    return binascii.hexlify(hmac_digest(signature, combined))
+    return hmac_concat(signature, verification_id, caveat_id)
 
 
 def equals(val1, val2):
