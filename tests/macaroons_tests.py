@@ -7,6 +7,7 @@ from nose.tools import *
 from libnacl import crypto_box_NONCEBYTES
 from pymacaroons import Macaroon, Verifier
 from pymacaroons.utils import *
+from tests.test_binder import *
 
 
 class TestMacaroon(object):
@@ -250,3 +251,51 @@ never use the same secret twice',
         assert_equal(m.inspect(), 'location http://mybank/\nidentifier we used\
  our secret key\ncid test = caveat\nsignature 197bac7a044af33332865b9266e26d49\
 3bdd668a660e44d88ce1a998c23dbd67')
+
+    def test_verify_third_party_caveat_with_custom_binder(self):
+        m = Macaroon(
+            location='http://mybank/',
+            identifier='we used our other secret key',
+            key='this is a different super-secret key; \
+never use the same secret twice'
+        )
+        m.add_first_party_caveat('account = 3735928559')
+
+        # first third party caveat
+        caveat_key_1 = '4; guaranteed random by a fair toss of the dice'
+        predicate_1 = 'user = Alice'
+        identifier_1 = 'this was how we remind auth of key/pred'
+        m.add_third_party_caveat('http://auth.mybank/', caveat_key_1, identifier_1)
+
+        # second third party caveat
+        caveat_key_2 = '5; guaranteed random by a fair toss of the dice'
+        predicate_2 = 'test = caveat'
+        identifier_2 = 'reminder for other.service'
+        m.add_third_party_caveat('http://other.service/', caveat_key_2, identifier_2)
+
+        discharge_1 = Macaroon(
+            location='http://auth.mybank/',
+            key=caveat_key_1,
+            identifier=identifier_1
+        )
+        discharge_1.add_first_party_caveat('time < 2015-01-01T00:00')
+        protected_1 = m.prepare_for_request(discharge_1, binder_class=HashSignaturesBinder1)
+
+        discharge_2 = Macaroon(
+            location='http://other.service/',
+            key=caveat_key_2,
+            identifier=identifier_2
+        )
+        discharge_2.add_first_party_caveat('time < 2015-01-01T00:00')
+        protected_2 = m.prepare_for_request(discharge_2, binder_class=HashSignaturesBinder2)
+
+        v = Verifier(discharge_binders={identifier_1: HashSignaturesBinder1, 'http://other.service/': HashSignaturesBinder2})
+        v.satisfy_exact('account = 3735928559')
+        v.satisfy_exact('time < 2015-01-01T00:00')
+        verified = v.verify(
+            m,
+            'this is a different super-secret key; \
+never use the same secret twice',
+            discharge_macaroons=[protected_1, protected_2]
+        )
+        assert_true(verified)

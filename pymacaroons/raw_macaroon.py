@@ -7,7 +7,6 @@ from base64 import standard_b64encode
 from libnacl.secret import SecretBox
 
 from pymacaroons.caveat import Caveat
-from pymacaroons.binders import HashSignaturesBinder
 from pymacaroons.utils import (truncate_or_pad,
                                create_initial_macaroon_signature,
                                generate_derived_key,
@@ -71,8 +70,8 @@ class RawMacaroon(object):
 
     # Protects discharge macaroons in the event they are sent to
     # the wrong location by binding to the root macaroon
-    def prepare_for_request(self, macaroon):
-        return HashSignaturesBinder(self).bind(macaroon)
+    def prepare_for_request(self, macaroon, binder_class):
+        return binder_class(self).bind(macaroon)
 
     # The existing macaroon signature is the key for hashing the
     # caveat being added. This new hash becomes the signature of

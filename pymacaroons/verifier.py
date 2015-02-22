@@ -23,10 +23,12 @@ from pymacaroons.utils import (convert_to_bytes,
 
 class Verifier(object):
 
-    def __init__(self):
+    def __init__(self, default_binder_class=None, discharge_binders=None):
         self.predicates = []
         self.callbacks = []
         self.calculated_signature = None
+        self.binder_class = default_binder_class or HashSignaturesBinder
+        self.discharge_binders = discharge_binders or {}
 
     def satisfy_exact(self, predicate):
         if predicate is None:
@@ -47,25 +49,24 @@ class Verifier(object):
             discharge_macaroons
         )
 
-    def verify_discharge(self, root, macaroon, key, discharge_macaroons=None):
+    def verify_discharge(self, root, discharge, key,
+                         discharge_macaroons=None, binder_class=None):
         self.calculated_signature = hmac_digest(
-            key, convert_to_bytes(macaroon.identifier)
+            key, convert_to_bytes(discharge.identifier)
         )
 
-        self._verify_caveats(macaroon, discharge_macaroons)
+        self._verify_caveats(discharge, discharge_macaroons)
 
-        if root != macaroon:
+        if root != discharge:
+            binder_class = binder_class or self.binder_class
             self.calculated_signature = binascii.unhexlify(
-                # TODO: this should allow setting a custom binder at both the
-                # instance level and the discharge_macaroon level, perhaps
-                # by passing in [(discharge, binder)]
-                HashSignaturesBinder(root).bind_signature(
+                binder_class(root).bind_signature(
                     binascii.hexlify(self.calculated_signature)
                 )
             )
 
         if not self._signatures_match(
-            macaroon.signature,
+            discharge.signature,
             binascii.hexlify(self.calculated_signature)
         ):
             raise MacaroonInvalidSignatureException('Signatures do not match.')
@@ -134,7 +135,9 @@ class Verifier(object):
             root_macaroon,
             caveat_macaroon,
             caveat_key,
-            discharge_macaroons
+            discharge_macaroons=discharge_macaroons,
+            binder_class=(self.discharge_binders.get(caveat.caveatId) or
+                          self.discharge_binders.get(caveat.location))
         )
         if caveatMet:
             encode_key = self.calculated_signature

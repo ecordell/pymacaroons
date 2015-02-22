@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import copy
 
 from pymacaroons.raw_macaroon import RawMacaroon
+from pymacaroons.binders import HashSignaturesBinder
 from pymacaroons.serializers.binary_serializer import BinarySerializer
 from pymacaroons.serializers.json_serializer import JsonSerializer
 from pymacaroons.exceptions import MacaroonInitException
@@ -13,8 +14,8 @@ class Macaroon(object):
     def __init__(self,
                  location=None,
                  identifier=None,
-                 key=None):
-
+                 key=None,
+                 default_binder_class=None):
         if location and identifier and key:
             self._raw_macaroon = RawMacaroon(
                 location=convert_to_bytes(location),
@@ -25,6 +26,7 @@ class Macaroon(object):
             raise MacaroonInitException(
                 'Must supply all: (location, id, key).'
             )
+        self.binder_class = default_binder_class or HashSignaturesBinder
 
     @staticmethod
     def from_binary(serialized):
@@ -90,10 +92,11 @@ class Macaroon(object):
 
     # Protects discharge macaroons in the event they are sent to
     # the wrong location by binding to the root macaroon
-    def prepare_for_request(self, macaroon):
+    def prepare_for_request(self, macaroon, binder_class=None):
         protected = self.copy()
         protected._raw_macaroon = self._raw_macaroon.prepare_for_request(
-            macaroon._raw_macaroon
+            macaroon._raw_macaroon,
+            binder_class or self.binder_class
         )
         return protected
 
