@@ -18,5 +18,9 @@ class MacaroonUnmetCaveatException(MacaroonVerificationFailedException):
     pass
 
 
+class MacaroonSerializationException(MacaroonException):
+    pass
+
+
 class MacaroonDeserializationException(MacaroonException):
     pass

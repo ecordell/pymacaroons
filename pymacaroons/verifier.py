@@ -52,7 +52,7 @@ class Verifier(object):
     def verify_discharge(self, root, discharge, key,
                          discharge_macaroons=None, binder_class=None):
         self.calculated_signature = hmac_digest(
-            key, convert_to_bytes(discharge.identifier)
+            key, discharge._identifier
         )
 
         self._verify_caveats(discharge, discharge_macaroons)
@@ -104,7 +104,7 @@ class Verifier(object):
             self.calculated_signature = binascii.unhexlify(
                 sign_first_party_caveat(
                     encode_key,
-                    convert_to_bytes(caveat.caveatId)
+                    caveat._caveatId
                 )
             )
         return caveatMet
@@ -144,8 +144,8 @@ class Verifier(object):
             self.calculated_signature = binascii.unhexlify(
                 sign_third_party_caveat(
                     encode_key,
-                    convert_to_bytes(caveat.verificationKeyId),
-                    convert_to_bytes(caveat.caveatId)
+                    caveat._verificationKeyId,
+                    caveat._caveatId
                 )
             )
         return caveatMet
@@ -154,7 +154,7 @@ class Verifier(object):
         key = truncate_or_pad(self.calculated_signature)
         box = SecretBox(key=key)
         decoded_vid = standard_b64decode(
-            convert_to_bytes(caveat.verificationKeyId)
+            caveat._verificationKeyId
         )
         decrypted = box.decrypt(decoded_vid)
         return decrypted

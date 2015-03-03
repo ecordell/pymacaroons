@@ -6,6 +6,8 @@ from nose.tools import *
 
 from libnacl import crypto_box_NONCEBYTES
 from pymacaroons import Macaroon, Verifier
+from pymacaroons.serializers import *
+from pymacaroons.exceptions import *
 from pymacaroons.utils import *
 from tests.test_binder import *
 
@@ -52,8 +54,39 @@ WQgb3VyIHNlY3JldCBrZXkKMDAxNmNpZCB0ZXN0ID0gY2F2ZWF0CjAwMmZzaWduYXR1cmUgGXusegR\
 K8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'
         )
 
+    def test_serializing_strips_padding(self):
+        m = Macaroon(
+            location='http://mybank/',
+            identifier='we used our secret key',
+            key='this is our super secret key; only we should know it'
+        )
+        m.add_first_party_caveat('test = acaveat')
+        assert_equal(
+            m.serialize(),
+            # In padded base64, this would end with '=='
+            ('MDAxY2xvY2F0aW9uIGh0dHA6Ly9teWJhbmsvCjAwMjZpZGVudGlmaWVyIHdlIHVz'
+             'ZWQgb3VyIHNlY3JldCBrZXkKMDAxN2NpZCB0ZXN0ID0gYWNhdmVhdAowMDJmc2ln'
+             'bmF0dXJlIJRJ_V3WNJQnqlVq5eez7spnltwU_AXs8NIRY739sHooCg')
+        )
+
+    def test_serializing_max_length_packet(self):
+        m = Macaroon(location='test', identifier='blah', key='secret')
+        m.add_first_party_caveat('x' * 65526)  # exactly 0xFFFF
+        assert_not_equal(
+            m.serialize(),
+            None
+        )
+
+    def test_serializing_too_long_packet(self):
+        m = Macaroon(location='test', identifier='blah', key='secret')
+        m.add_first_party_caveat('x' * 65527)  # one byte too long
+        assert_raises(
+            MacaroonSerializationException,
+            m.serialize
+        )
+
     def test_deserializing(self):
-        m = Macaroon.from_binary(
+        m = Macaroon.deserialize(
             'MDAxY2xvY2F0aW9uIGh0dHA6Ly9teWJhbmsvCjAwMjZpZGVudGlmaW\
 VyIHdlIHVzZWQgb3VyIHNlY3JldCBrZXkKMDAxNmNpZCB0ZXN0ID0gY2F2ZWF0CjAwMmZzaWduYXR1\
 cmUgGXusegRK8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'
@@ -61,6 +94,17 @@ cmUgGXusegRK8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'
         assert_equal(
             m.signature,
             '197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67'
+        )
+
+    def test_deserializing_accepts_padding(self):
+        m = Macaroon.deserialize(
+            ('MDAxY2xvY2F0aW9uIGh0dHA6Ly9teWJhbmsvCjAwMjZpZGVudGlmaWVyIHdlIHVz'
+             'ZWQgb3VyIHNlY3JldCBrZXkKMDAxN2NpZCB0ZXN0ID0gYWNhdmVhdAowMDJmc2ln'
+             'bmF0dXJlIJRJ_V3WNJQnqlVq5eez7spnltwU_AXs8NIRY739sHooCg==')
+        )
+        assert_equal(
+            m.signature,
+            '9449fd5dd6349427aa556ae5e7b3eeca6796dc14fc05ecf0d21163bdfdb07a28'
         )
 
     def test_serializing_json(self):
@@ -71,15 +115,16 @@ cmUgGXusegRK8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'
         )
         m.add_first_party_caveat('test = caveat')
         assert_equal(
-            json.loads(m.serialize_json())['signature'],
+            json.loads(m.serialize(serializer=JsonSerializer()))['signature'],
             "197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67"
         )
 
     def test_deserializing_json(self):
-        m = Macaroon.from_json(
+        m = Macaroon.deserialize(
             '{"location": "http://mybank/", "identifier": "we used our secret \
 key", "signature": "197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c2\
-3dbd67", "caveats": [{"cl": null, "cid": "test = caveat", "vid": null}]}'
+3dbd67", "caveats": [{"cl": null, "cid": "test = caveat", "vid": null}]}',
+            serializer=JsonSerializer()
         )
         assert_equal(
             m.signature,
@@ -93,8 +138,10 @@ key", "signature": "197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c2\
             key='secret_key_1'
         )
         m.add_first_party_caveat('test = caveat')
-        m.serialize_json()
-        n = Macaroon.from_json(m.serialize_json())
+        n = Macaroon.deserialize(
+            m.serialize(serializer=JsonSerializer()),
+            serializer=JsonSerializer()
+        )
         assert_equal(m.signature, n.signature)
 
     def test_verify_first_party_exact_caveats(self):
@@ -167,7 +214,7 @@ never use the same secret twice'
         identifier = 'this was how we remind auth of key/pred'
         m.add_third_party_caveat('http://auth.mybank/', caveat_key, identifier)
 
-        n = Macaroon.from_binary(m.serialize())
+        n = Macaroon.deserialize(m.serialize())
 
         assert_equal(
             m.signature,
@@ -193,7 +240,7 @@ never use the same secret twice'
         identifier = 'this was how we remind auth of key/pred'
         m.add_third_party_caveat(
             'http://auth.mybank/',
-            caveat_key.encode('ascii'),
+            caveat_key,
             identifier
         )
 

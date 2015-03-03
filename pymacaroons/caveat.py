@@ -7,9 +7,9 @@ class Caveat(object):
                  caveatId=None,
                  verificationKeyId=None,
                  location=None):
-        self.caveatId = convert_to_bytes(caveatId)
-        self.verificationKeyId = convert_to_bytes(verificationKeyId)
-        self.location = convert_to_bytes(location)
+        self.caveatId = caveatId
+        self.verificationKeyId = verificationKeyId
+        self.location = location
 
     @property
     def caveatId(self):

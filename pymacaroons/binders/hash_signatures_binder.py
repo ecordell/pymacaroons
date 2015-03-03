@@ -1,7 +1,7 @@
 import binascii
 
 from pymacaroons.binders.base_binder import BaseBinder
-from pymacaroons.utils import hmac_concat, truncate_or_pad, convert_to_bytes
+from pymacaroons.utils import hmac_concat, truncate_or_pad
 
 
 class HashSignaturesBinder(BaseBinder):
@@ -13,6 +13,6 @@ class HashSignaturesBinder(BaseBinder):
     def bind_signature(self, signature):
         return hmac_concat(
             self.key,
-            binascii.unhexlify(convert_to_bytes(self.root.signature)),
-            binascii.unhexlify(convert_to_bytes(signature))
+            binascii.unhexlify(self.root._signature),
+            binascii.unhexlify(signature)
         )
