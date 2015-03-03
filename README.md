@@ -51,35 +51,18 @@ m = Macaroon(
 # Add a caveat for the target service
 m.add_first_party_caveat('picture_id = bobs_cool_cat.jpg')
 
-# Serialize for transport in a cookie, url, OAuth token, etc
-serialized = m.serialize()
-
-print(serialized)
-# MDAyZWxvY2F0aW9uIGNvb2wtcGljdHVyZS1zZXJ2aWNlLmV4YW1wbGUuY29tCjAwMWJpZGVudGlmaWVyIGtleS1mb3ItYm9iCjAwMjdjaWQgcGljdHVyZV9pZCA9IGJvYnNfY29vbF9jYXQuanBnCjAwMmZzaWduYXR1cmUgg9j6KAsJk408_-BFY09UT_r3Ev8sUaw0goropCsnf48K
-
-# Serialize in json form
-serialized_json = m.serialize_json()
-
-print(serialized_json)
-# {
-#    "identifier": "key-for-bob",
-#    "caveats": [
-#        {
-#            "cl": null,
-#            "vid": null,
-#            "cid": "picture_id = bobs_cool_cat.jpg"
-#        }
-#    ],
-#    "location": "cool-picture-service.example.com",
-#    "signature": "83d8fa280b09938d3cffe045634f544ffaf712ff2c51ac34828ae8a42b277f8f"
-# }
-
 # Inspect Macaroon (useful for debugging)
 print(m.inspect())
 # location cool-picture-service.example.com
 # identifier key-for-bob
 # cid picture_id = bobs_cool_cat.jpg
 # signature 83d8fa280b09938d3cffe045634f544ffaf712ff2c51ac34828ae8a42b277f8f
+
+# Serialize for transport in a cookie, url, OAuth token, etc
+serialized = m.serialize()
+
+print(serialized)
+# MDAyZWxvY2F0aW9uIGNvb2wtcGljdHVyZS1zZXJ2aWNlLmV4YW1wbGUuY29tCjAwMWJpZGVudGlmaWVyIGtleS1mb3ItYm9iCjAwMjdjaWQgcGljdHVyZV9pZCA9IGJvYnNfY29vbF9jYXQuanBnCjAwMmZzaWduYXR1cmUgg9j6KAsJk408_-BFY09UT_r3Ev8sUaw0goropCsnf48K
 ```
 
 ### Verifying Macaroon
