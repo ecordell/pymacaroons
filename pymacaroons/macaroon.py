@@ -23,22 +23,20 @@ class Macaroon(object):
                  default_serializer=None,
                  caveats=None,
                  signature=None):
+        self.binder_class = default_binder_class or HashSignaturesBinder
+        self.serializer = default_serializer or BinarySerializer()
         self.caveats = caveats or []
-        if location:
-            self.location = location
-        if identifier:
-            self.identifier = identifier
-        if location and identifier and key:
+        self.location = location or ''
+        self.identifier = identifier or ''
+        self.signature = signature or ''
+
+        if key:
             self.signature = create_initial_macaroon_signature(
                 convert_to_bytes(key), convert_to_bytes(identifier)
             )
-        if signature:
-            self.signature = signature
-        self.binder_class = default_binder_class or HashSignaturesBinder
-        self.serializer = default_serializer or BinarySerializer()
 
-    @staticmethod
-    def deserialize(serialized, serializer=None):
+    @classmethod
+    def deserialize(cls, serialized, serializer=None):
         serializer = serializer or BinarySerializer()
         if serialized:
             return serializer.deserialize(serialized)
