@@ -1,4 +1,5 @@
 language: python
+python: 3.4
 before_install:
   - wget https://github.com/jedisct1/libsodium/releases/download/1.0.0/libsodium-1.0.0.tar.gz
   - tar xzvf libsodium-1.0.0.tar.gz
