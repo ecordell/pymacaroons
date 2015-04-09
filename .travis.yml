@@ -1,11 +1,5 @@
 language: python
-python:
-  - "2.6"
-  - "2.7"
-  - "3.3"
-  - "3.4"
-  - "pypy"
-  - "pypy3"
+python: 3.4
 before_install:
   - wget https://github.com/jedisct1/libsodium/releases/download/1.0.0/libsodium-1.0.0.tar.gz
   - tar xzvf libsodium-1.0.0.tar.gz
@@ -13,7 +7,18 @@ before_install:
   - ./configure && make && make check && sudo make install
   - cd ..
   - sudo ldconfig
-install: "pip install -r requirements.txt"
-script: nosetests --with-coverage --cover-erase --cover-package=pymacaroons
+install:
+  - pip install tox
+script:
+  - tox -e $TOX_ENV
+env:
+  - TOX_ENV=py26
+  - TOX_ENV=py27
+  - TOX_ENV=py33
+  - TOX_ENV=py34
+  - TOX_ENV=pypy
+  - TOX_ENV=pypy3
+  - TOX_ENV=docs
+  - TOX_ENV=flake8
+  - TOX_ENV=coverage
 after_success: coveralls
-

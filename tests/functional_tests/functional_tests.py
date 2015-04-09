@@ -9,7 +9,7 @@ from pymacaroons import Macaroon, Verifier
 from pymacaroons.serializers import *
 from pymacaroons.exceptions import *
 from pymacaroons.utils import *
-from tests.test_binder import *
+from .test_binder import *
 
 
 class TestMacaroon(object):
