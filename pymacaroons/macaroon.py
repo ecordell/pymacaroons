@@ -2,9 +2,10 @@ from __future__ import unicode_literals
 from base64 import standard_b64encode
 import copy
 import binascii
-from libnacl.secret import SecretBox
-from pymacaroons import Caveat
 
+from libnacl.secret import SecretBox
+
+from pymacaroons import Caveat
 from pymacaroons.binders import HashSignaturesBinder
 from pymacaroons.serializers.binary_serializer import BinarySerializer
 from pymacaroons.exceptions import MacaroonInitException
@@ -21,10 +22,12 @@ class Macaroon(object):
                  key=None,
                  default_binder_class=None,
                  default_serializer=None,
+                 default_field_encryptor=None,
                  caveats=None,
                  signature=None):
         self.binder_class = default_binder_class or HashSignaturesBinder
         self.serializer = default_serializer or BinarySerializer()
+        self.field_encryptor = default_field_encryptor
         self.caveats = caveats or []
         self.location = location or ''
         self.identifier = identifier or ''
@@ -104,7 +107,13 @@ class Macaroon(object):
     # The existing macaroon signature is the key for hashing the
     # caveat being added. This new hash becomes the signature of
     # the macaroon with caveat added.
-    def add_first_party_caveat(self, predicate):
+    def add_first_party_caveat(self, predicate, field_encryptor=None):
+        field_encryptor = field_encryptor or self.field_encryptor
+        if field_encryptor:
+            predicate = field_encryptor.encrypt(
+                binascii.unhexlify(self._signature),
+                predicate
+            )
         predicate = convert_to_bytes(predicate)
         caveat = Caveat(caveat_id=convert_to_bytes(predicate))
         self.caveats.append(caveat)
@@ -116,7 +125,14 @@ class Macaroon(object):
     # the caveat is added to the list. The existing macaroon signature
     # is the key for hashing the string (verificationId + caveat_id).
     # This new hash becomes the signature of the macaroon with caveat added.
-    def add_third_party_caveat(self, location, key, key_id, nonce=None):
+    def add_third_party_caveat(self, location, key, key_id,
+                               nonce=None, field_encryptor=None):
+        field_encryptor = field_encryptor or self.field_encryptor
+        if field_encryptor:
+            key_id = field_encryptor.encrypt(
+                binascii.unhexlify(self._signature),
+                key_id
+            )
         derived_key = truncate_or_pad(generate_derived_key(convert_to_bytes(
             key)))
         old_key = truncate_or_pad(binascii.unhexlify(self._signature))

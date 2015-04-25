@@ -8,6 +8,7 @@ except ImportError:
     from pymacaroons.utils import equals as constant_time_compare
 
 from libnacl.secret import SecretBox
+from six import iteritems
 
 from pymacaroons.binders import HashSignaturesBinder
 from pymacaroons.exceptions import (MacaroonInvalidSignatureException,
@@ -23,12 +24,18 @@ from pymacaroons.utils import (convert_to_bytes,
 
 class Verifier(object):
 
-    def __init__(self, default_binder_class=None, discharge_binders=None):
+    def __init__(self,
+                 default_binder_class=None,
+                 discharge_binders=None,
+                 field_encryptors=None):
         self.predicates = []
         self.callbacks = []
         self.calculated_signature = None
         self.binder_class = default_binder_class or HashSignaturesBinder
         self.discharge_binders = discharge_binders or {}
+        self.field_encryptors = dict(
+            (f.signifier, f) for f in field_encryptors
+        ) if field_encryptors else {}
 
     def satisfy_exact(self, predicate):
         if predicate is None:
@@ -92,6 +99,15 @@ class Verifier(object):
 
     def _verify_first_party_caveat(self, caveat):
         caveat_met = False
+        caveat_id = caveat.caveat_id
+
+        for signifier, encryptor in iteritems(self.field_encryptors):
+            if caveat_id.startswith(signifier):
+                caveat_id = encryptor.decrypt(
+                    self.calculated_signature,
+                    caveat_id
+                )
+
         if caveat.caveat_id in self.predicates:
             caveat_met = True
         else:
