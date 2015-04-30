@@ -1,7 +1,13 @@
+from abc import ABCMeta, abstractmethod
+
+
 class BaseSerializer(object):
+    __metaclass__ = ABCMeta
 
+    @abstractmethod
     def serialize(self, macaroon):
-        raise NotImplementedError()
+        pass
 
+    @abstractmethod
     def deserialize(self, serialized):
-        raise NotImplementedError()
+        pass

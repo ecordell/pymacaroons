@@ -9,7 +9,7 @@ from pymacaroons.binders import HashSignaturesBinder
 from pymacaroons.serializers.binary_serializer import BinarySerializer
 from pymacaroons.exceptions import MacaroonInitException
 from pymacaroons.utils import convert_to_bytes, convert_to_string, \
-    create_initial_macaroon_signature, truncate_or_pad, generate_derived_key, \
+    create_initial_signature, truncate_or_pad, generate_derived_key, \
     sign_third_party_caveat, sign_first_party_caveat
 
 
@@ -31,7 +31,7 @@ class Macaroon(object):
         self.signature = signature or ''
 
         if key:
-            self.signature = create_initial_macaroon_signature(
+            self.signature = create_initial_signature(
                 convert_to_bytes(key), convert_to_bytes(identifier)
             )
 
@@ -69,14 +69,6 @@ class Macaroon(object):
     def signature(self, string_or_bytes):
         self._signature = convert_to_bytes(string_or_bytes)
 
-    @property
-    def caveats(self):
-        return self._caveats
-
-    @caveats.setter
-    def caveats(self, caveats):
-        self._caveats = caveats
-
     def copy(self):
         return copy.deepcopy(self)
 
@@ -88,17 +80,18 @@ class Macaroon(object):
         combined = 'location {loc}\n'.format(loc=self.location)
         combined += 'identifier {id}\n'.format(id=self.identifier)
         for caveat in self.caveats:
-            combined += 'cid {cid}\n'.format(cid=caveat.caveatId)
-            if caveat.verificationKeyId and caveat.location:
-                combined += 'vid {vid}\n'.format(vid=caveat.verificationKeyId)
+            combined += 'cid {cid}\n'.format(cid=caveat.caveat_id)
+            if caveat.verification_key_id and caveat.location:
+                combined += 'vid {vid}\n'.format(
+                    vid=caveat.verification_key_id)
                 combined += 'cl {cl}\n'.format(cl=caveat.location)
         combined += 'signature {sig}'.format(sig=self.signature)
         return combined
 
-    def first_party_caveats(self):
+    def first_partycaveats(self):
         return [caveat for caveat in self.caveats if caveat.first_party()]
 
-    def third_party_caveats(self):
+    def third_partycaveats(self):
         return [caveat for caveat in self.caveats if caveat.third_party()]
 
     # Protects discharge macaroons in the event they are sent to
@@ -113,7 +106,7 @@ class Macaroon(object):
     # the macaroon with caveat added.
     def add_first_party_caveat(self, predicate):
         predicate = convert_to_bytes(predicate)
-        caveat = Caveat(caveatId=convert_to_bytes(predicate))
+        caveat = Caveat(caveat_id=convert_to_bytes(predicate))
         self.caveats.append(caveat)
         encode_key = binascii.unhexlify(self._signature)
         self._signature = sign_first_party_caveat(encode_key, predicate)
@@ -121,7 +114,7 @@ class Macaroon(object):
 
     # The third party caveat key is encrypted useing the current signature, and
     # the caveat is added to the list. The existing macaroon signature
-    # is the key for hashing the string (verificationId + caveatId).
+    # is the key for hashing the string (verificationId + caveat_id).
     # This new hash becomes the signature of the macaroon with caveat added.
     def add_third_party_caveat(self, location, key, key_id, nonce=None):
         derived_key = truncate_or_pad(generate_derived_key(convert_to_bytes(
@@ -129,17 +122,17 @@ class Macaroon(object):
         old_key = truncate_or_pad(binascii.unhexlify(self._signature))
         box = SecretBox(key=old_key)
         encrypted = box.encrypt(derived_key, nonce=nonce)
-        verificationKeyId = standard_b64encode(encrypted)
+        verification_key_id = standard_b64encode(encrypted)
         caveat = Caveat(
-            caveatId=key_id,
+            caveat_id=key_id,
             location=location,
-            verificationKeyId=verificationKeyId
+            verification_key_id=verification_key_id
         )
-        self._caveats.append(caveat)
+        self.caveats.append(caveat)
         encode_key = binascii.unhexlify(self._signature)
         self._signature = sign_third_party_caveat(
             encode_key,
-            caveat._verificationKeyId,
-            caveat._caveatId
+            caveat._verification_key_id,
+            caveat._caveat_id
         )
         return self

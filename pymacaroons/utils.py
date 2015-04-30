@@ -5,24 +5,24 @@ import binascii
 from six import text_type, binary_type
 
 
-def convert_to_bytes(string):
-    if string is None:
+def convert_to_bytes(string_or_bytes):
+    if string_or_bytes is None:
         return None
-    if type(string) is text_type:
-        return string.encode('ascii')
-    elif type(string) is binary_type:
-        return string
+    if isinstance(string_or_bytes, text_type):
+        return string_or_bytes.encode('ascii')
+    elif isinstance(string_or_bytes, binary_type):
+        return string_or_bytes
     else:
         raise TypeError("Must be a string or bytes object.")
 
 
-def convert_to_string(bytes):
-    if bytes is None:
+def convert_to_string(string_or_bytes):
+    if string_or_bytes is None:
         return None
-    if type(bytes) is text_type:
-        return bytes
-    elif type(bytes) is binary_type:
-        return bytes.decode('ascii')
+    if isinstance(string_or_bytes, text_type):
+        return string_or_bytes
+    elif isinstance(string_or_bytes, binary_type):
+        return string_or_bytes.decode('ascii')
     else:
         raise TypeError("Must be a string or bytes object.")
 
@@ -57,7 +57,7 @@ def hmac_hex(key, data):
     return binascii.hexlify(dig)
 
 
-def create_initial_macaroon_signature(key, identifier):
+def create_initial_signature(key, identifier):
     derived_key = generate_derived_key(key)
     return hmac_hex(derived_key, identifier)
 

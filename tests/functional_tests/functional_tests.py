@@ -144,7 +144,7 @@ key", "signature": "197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c2\
         )
         assert_equal(m.signature, n.signature)
 
-    def test_verify_first_party_exact_caveats(self):
+    def test_verify_first_party_exactcaveats(self):
         m = Macaroon(
             location='http://mybank/',
             identifier='we used our secret key',
@@ -159,7 +159,7 @@ key", "signature": "197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c2\
         )
         assert_true(verified)
 
-    def test_verify_first_party_general_caveats(self):
+    def test_verify_first_party_generalcaveats(self):
         m = Macaroon(
             location='http://mybank/',
             identifier='we used our secret key',
@@ -201,7 +201,7 @@ never use the same secret twice'
             '6b99edb2ec6d7a4382071d7d41a0bf7dfa27d87d2f9fea86e330d7850ffda2b2'
         )
 
-    def test_serializing_macaroon_with_first_and_third_caveats(self):
+    def test_serializing_macaroon_with_first_and_thirdcaveats(self):
         m = Macaroon(
             location='http://mybank/',
             identifier='we used our other secret key',
@@ -256,7 +256,7 @@ never use the same secret twice'
             'b38b26ab29d3724e728427e758cccc16d9d7f3de46d0d811b70b117b05357b9b'
         )
 
-    def test_verify_third_party_caveats(self):
+    def test_verify_third_partycaveats(self):
         m = Macaroon(
             location='http://mybank/',
             identifier='we used our other secret key',
