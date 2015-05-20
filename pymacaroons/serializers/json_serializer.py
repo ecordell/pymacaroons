@@ -23,8 +23,8 @@ class JsonSerializer(object):
 
         for c in deserialized['caveats']:
             caveat = Caveat(
-                caveatId=c['cid'],
-                verificationKeyId=c['vid'],
+                caveat_id=c['cid'],
+                verification_key_id=c['vid'],
                 location=c['cl']
             )
             caveats.append(caveat)

@@ -18,15 +18,16 @@ class BinarySerializer(BaseSerializer):
         combined += self._packetize(b'identifier', macaroon.identifier)
 
         for caveat in macaroon.caveats:
-            combined += self._packetize(b'cid', caveat._caveatId)
+            combined += self._packetize(b'cid', caveat._caveat_id)
 
-            if caveat._verificationKeyId and caveat._location:
-                combined += self._packetize(b'vid', caveat._verificationKeyId)
+            if caveat._verification_key_id and caveat._location:
+                combined += self._packetize(
+                    b'vid', caveat._verification_key_id)
                 combined += self._packetize(b'cl', caveat._location)
 
         combined += self._packetize(
             b'signature',
-            binascii.unhexlify(macaroon._signature)
+            binascii.unhexlify(macaroon.signature_bytes)
         )
         return urlsafe_b64encode(combined).decode('ascii').rstrip('=')
 
@@ -62,9 +63,9 @@ class BinarySerializer(BaseSerializer):
             elif key == b'identifier':
                 macaroon.identifier = value
             elif key == b'cid':
-                macaroon.caveats.append(Caveat(caveatId=value))
+                macaroon.caveats.append(Caveat(caveat_id=value))
             elif key == b'vid':
-                macaroon.caveats[-1].verificationKeyId = value
+                macaroon.caveats[-1].verification_key_id = value
             elif key == b'cl':
                 macaroon.caveats[-1].location = value
             elif key == b'signature':

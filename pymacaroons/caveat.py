@@ -4,47 +4,46 @@ from pymacaroons.utils import convert_to_string, convert_to_bytes
 class Caveat(object):
 
     def __init__(self,
-                 caveatId=None,
-                 verificationKeyId=None,
+                 caveat_id=None,
+                 verification_key_id=None,
                  location=None):
-        self.caveatId = caveatId
-        self.verificationKeyId = verificationKeyId
+        self.caveat_id = caveat_id
+        self.verification_key_id = verification_key_id
         self.location = location
 
     @property
-    def caveatId(self):
-        return convert_to_string(self._caveatId)
+    def caveat_id(self):
+        return convert_to_string(self._caveat_id)
 
     @property
-    def verificationKeyId(self):
-        return convert_to_string(self._verificationKeyId)
+    def verification_key_id(self):
+        return convert_to_string(self._verification_key_id)
 
     @property
     def location(self):
         return convert_to_string(self._location)
 
-    @caveatId.setter
-    def caveatId(self, value):
-        self._caveatId = convert_to_bytes(value)
+    @caveat_id.setter
+    def caveat_id(self, value):
+        self._caveat_id = convert_to_bytes(value)
 
-    @verificationKeyId.setter
-    def verificationKeyId(self, value):
-        self._verificationKeyId = convert_to_bytes(value)
+    @verification_key_id.setter
+    def verification_key_id(self, value):
+        self._verification_key_id = convert_to_bytes(value)
 
     @location.setter
     def location(self, value):
         self._location = convert_to_bytes(value)
 
     def first_party(self):
-        return self._verificationKeyId is None
+        return self._verification_key_id is None
 
     def third_party(self):
-        return self._verificationKeyId is not None
+        return self._verification_key_id is not None
 
     def to_dict(self):
-        serialized = {
-            'cid': self.caveatId,
-            'vid': self.verificationKeyId,
+        return {
+            'cid': self.caveat_id,
+            'vid': self.verification_key_id,
             'cl': self.location
         }
-        return serialized
