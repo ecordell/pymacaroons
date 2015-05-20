@@ -1,5 +1,4 @@
 from __future__ import unicode_literals
-from base64 import standard_b64encode, standard_b64decode
 import binascii
 
 from libnacl.secret import SecretBox
@@ -29,12 +28,14 @@ class ThirdPartyCaveatDelegate(BaseThirdPartyCaveatDelegate):
                                key,
                                key_id,
                                **kwargs):
-        derived_key = truncate_or_pad(generate_derived_key(convert_to_bytes(
-            key)))
+        derived_key = truncate_or_pad(
+            generate_derived_key(convert_to_bytes(key))
+        )
         old_key = truncate_or_pad(binascii.unhexlify(macaroon.signature_bytes))
         box = SecretBox(key=old_key)
-        encrypted = box.encrypt(derived_key, nonce=kwargs.get('nonce'))
-        verification_key_id = standard_b64encode(encrypted)
+        verification_key_id = box.encrypt(
+            derived_key, nonce=kwargs.get('nonce')
+        )
         caveat = Caveat(
             caveat_id=key_id,
             location=location,
@@ -99,8 +100,5 @@ class ThirdPartyCaveatVerifierDelegate(BaseThirdPartyCaveatVerifierDelegate):
     def _extract_caveat_key(self, signature, caveat):
         key = truncate_or_pad(signature)
         box = SecretBox(key=key)
-        decoded_vid = standard_b64decode(
-            caveat._verification_key_id
-        )
-        decrypted = box.decrypt(decoded_vid)
+        decrypted = box.decrypt(caveat._verification_key_id)
         return decrypted

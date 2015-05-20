@@ -197,7 +197,7 @@ never use the same secret twice'
         m.add_third_party_caveat('http://auth.mybank/', caveat_key, identifier)
         assert_equal(
             m.signature,
-            '6b99edb2ec6d7a4382071d7d41a0bf7dfa27d87d2f9fea86e330d7850ffda2b2'
+            'd27db2fd1f22760e4c3dae8137e2d8fc1df6c0741c18aed4b97256bf78d1f55c'
         )
 
     def test_serializing_macaroon_with_first_and_third_caveats(self):
@@ -250,7 +250,7 @@ never use the same secret twice'
         protected = m.prepare_for_request(discharge)
         assert_equal(
             protected.signature,
-            'b38b26ab29d3724e728427e758cccc16d9d7f3de46d0d811b70b117b05357b9b'
+            '2eb01d0dd2b4475330739140188648cf25dda0425ea9f661f1574ca0a9eac54e'
         )
 
     def test_verify_third_party_caveats(self):

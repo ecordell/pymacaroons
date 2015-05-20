@@ -1,3 +1,5 @@
+from base64 import standard_b64encode
+
 from pymacaroons.utils import convert_to_string, convert_to_bytes
 
 
@@ -44,6 +46,9 @@ class Caveat(object):
     def to_dict(self):
         return {
             'cid': self.caveat_id,
-            'vid': self.verification_key_id,
+            'vid': (
+                standard_b64encode(self.verification_key_id)
+                if self.verification_key_id else None
+            ),
             'cl': self.location
         }

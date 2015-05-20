@@ -1,5 +1,5 @@
 import json
-
+from base64 import standard_b64decode
 from pymacaroons.utils import convert_to_string
 
 
@@ -24,7 +24,9 @@ class JsonSerializer(object):
         for c in deserialized['caveats']:
             caveat = Caveat(
                 caveat_id=c['cid'],
-                verification_key_id=c['vid'],
+                verification_key_id=(
+                    standard_b64decode(c['vid']) if c['vid'] else None
+                ),
                 location=c['cl']
             )
             caveats.append(caveat)
