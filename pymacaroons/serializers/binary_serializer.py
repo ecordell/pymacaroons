@@ -27,7 +27,7 @@ class BinarySerializer(BaseSerializer):
 
         combined += self._packetize(
             b'signature',
-            binascii.unhexlify(macaroon._signature)
+            binascii.unhexlify(macaroon.signature_bytes)
         )
         return urlsafe_b64encode(combined).decode('ascii').rstrip('=')
 

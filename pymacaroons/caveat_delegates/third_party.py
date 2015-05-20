@@ -31,7 +31,7 @@ class ThirdPartyCaveatDelegate(BaseThirdPartyCaveatDelegate):
                                **kwargs):
         derived_key = truncate_or_pad(generate_derived_key(convert_to_bytes(
             key)))
-        old_key = truncate_or_pad(binascii.unhexlify(macaroon._signature))
+        old_key = truncate_or_pad(binascii.unhexlify(macaroon.signature_bytes))
         box = SecretBox(key=old_key)
         encrypted = box.encrypt(derived_key, nonce=kwargs.get('nonce'))
         verification_key_id = standard_b64encode(encrypted)
@@ -41,8 +41,8 @@ class ThirdPartyCaveatDelegate(BaseThirdPartyCaveatDelegate):
             verification_key_id=verification_key_id
         )
         macaroon.caveats.append(caveat)
-        encode_key = binascii.unhexlify(macaroon._signature)
-        macaroon._signature = sign_third_party_caveat(
+        encode_key = binascii.unhexlify(macaroon.signature_bytes)
+        macaroon.signature = sign_third_party_caveat(
             encode_key,
             caveat._verification_key_id,
             caveat._caveat_id

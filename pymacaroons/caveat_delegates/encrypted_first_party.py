@@ -20,7 +20,7 @@ class EncryptedFirstPartyCaveatDelegate(FirstPartyCaveatDelegate):
     def add_first_party_caveat(self, macaroon, predicate, **kwargs):
         if kwargs.get('encrypted'):
             predicate = self.field_encryptor.encrypt(
-                binascii.unhexlify(macaroon._signature),
+                binascii.unhexlify(macaroon.signature_bytes),
                 predicate
             )
         return super(EncryptedFirstPartyCaveatDelegate,

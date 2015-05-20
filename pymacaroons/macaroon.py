@@ -66,6 +66,10 @@ class Macaroon(object):
     def signature(self, string_or_bytes):
         self._signature = convert_to_bytes(string_or_bytes)
 
+    @property
+    def signature_bytes(self):
+        return self._signature
+
     def copy(self):
         return copy.deepcopy(self)
 

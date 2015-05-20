@@ -13,6 +13,6 @@ class HashSignaturesBinder(BaseBinder):
     def bind_signature(self, signature):
         return hmac_concat(
             self.key,
-            binascii.unhexlify(self.root._signature),
+            binascii.unhexlify(self.root.signature_bytes),
             binascii.unhexlify(signature)
         )

@@ -9,7 +9,7 @@ class BaseBinder(object):
 
     def bind(self, discharge):
         protected = discharge.copy()
-        protected._signature = self.bind_signature(discharge._signature)
+        protected.signature = self.bind_signature(discharge.signature_bytes)
         return protected
 
     @abstractmethod
