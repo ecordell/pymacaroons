@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import copy
+from base64 import standard_b64encode
 
 from pymacaroons.binders import HashSignaturesBinder
 from pymacaroons.serializers.binary_serializer import BinarySerializer
@@ -83,8 +84,10 @@ class Macaroon(object):
         for caveat in self.caveats:
             combined += 'cid {cid}\n'.format(cid=caveat.caveat_id)
             if caveat.verification_key_id and caveat.location:
-                combined += 'vid {vid}\n'.format(
-                    vid=caveat.verification_key_id)
+                vid = convert_to_string(
+                    standard_b64encode(caveat.verification_key_id)
+                )
+                combined += 'vid {vid}\n'.format(vid=vid)
                 combined += 'cl {cl}\n'.format(cl=caveat.location)
         combined += 'signature {sig}'.format(sig=self.signature)
         return combined
