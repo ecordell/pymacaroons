@@ -25,7 +25,7 @@ setup(
     include_package_data=True,
     long_description=long_description,
     install_requires=[
-        'six>=1.8.0,<1.9',
+        'six>=1.8.0',
         'libnacl>=1.3.6,<1.4',
     ],
     classifiers=[
