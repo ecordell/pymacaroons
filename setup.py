@@ -14,19 +14,19 @@ long_description = read_file('docs', 'index.rst')
 long_description = long_description.strip().split('split here', 2)[1][:-12]
 
 setup(
-    name='pymacaroons',
-    version="0.9.0",
+    name='pymacaroons-pynacl',
+    version="0.9.2",
     description='Macaroon library for Python',
     author='Evan Cordell',
     author_email='cordell.evan@gmail.com',
-    url='https://github.com/ecordell/pymacaroons',
+    url='https://github.com/matrix-org/pymacaroons',
     license='MIT',
     packages=find_packages(exclude=['tests', 'tests.*']),
     include_package_data=True,
     long_description=long_description,
     install_requires=[
         'six>=1.8.0',
-        'libnacl>=1.3.6,<1.4',
+        'pynacl>=0.3.0',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
