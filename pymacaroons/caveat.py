@@ -19,7 +19,7 @@ class Caveat(object):
 
     @property
     def verification_key_id(self):
-        return convert_to_string(self._verification_key_id)
+        return self._verification_key_id
 
     @property
     def location(self):

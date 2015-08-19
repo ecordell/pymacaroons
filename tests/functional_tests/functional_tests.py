@@ -39,7 +39,6 @@ class TestMacaroon(object):
             '197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67'
         )
 
-
     def test_serializing(self):
         m = Macaroon(
             location='http://mybank/',
@@ -284,15 +283,27 @@ never use the same secret twice',
         )
         assert_true(verified)
 
-    def test_inspect(self):
+    @patch('libnacl.secret.libnacl.utils.rand_nonce')
+    def test_inspect(self, rand_nonce):
+        # use a fixed nonce to ensure the same signature
+        rand_nonce.return_value = truncate_or_pad(
+            b'\0',
+            size=crypto_box_NONCEBYTES
+        )
         m = Macaroon(
             location='http://mybank/',
             identifier='we used our secret key',
             key='this is our super secret key; only we should know it'
         )
         m.add_first_party_caveat('test = caveat')
-        assert_equal(m.inspect(), 'location http://mybank/\nidentifier we used\
- our secret key\ncid test = caveat\nsignature 197bac7a044af33332865b9266e26d49\
-3bdd668a660e44d88ce1a998c23dbd67')
-
-
+        caveat_key = '4; guaranteed random by a fair toss of the dice'
+        identifier = 'this was how we remind auth of key/pred'
+        m.add_third_party_caveat('http://auth.mybank/', caveat_key, identifier)
+        assert_equal(m.inspect(), (
+            'location http://mybank/\n'
+            'identifier we used our secret key\n'
+            'cid test = caveat\n'
+            'cid this was how we remind auth of key/pred\n'
+            'vid AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA68NYajhiFuHnKGSNcVhkAwgbs0VZ0yK2o+q0Aq9+bONkXw7ky7HAuhCLO9hhaMMc\n'
+            'cl http://auth.mybank/\n'
+            'signature 7a9289bfbb92d725f748bbcb4f3e04e56b7021513ebeed8411bfba10a16a662e'))

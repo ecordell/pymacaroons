@@ -2,8 +2,8 @@ from __future__ import unicode_literals
 
 from mock import *
 from nose.tools import *
-from hypothesis import *
-from hypothesis.specifiers import *
+from hypothesis import assume, given, strategy
+from hypothesis.specifiers import one_of, sampled_from
 
 from six import text_type, binary_type
 from pymacaroons import Macaroon, Verifier
