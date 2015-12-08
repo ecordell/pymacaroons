@@ -1,0 +1,22 @@
+package macaroons;
+
+message Macaroon {
+  required string id = 1;
+  required string location = 2;
+
+  enum CaveatType {
+    FIRST_PARTY = 0;
+    THIRD_PARTY = 1;
+  }
+
+  message Caveat {
+    required CaveatType type = 1;
+    required string id = 2;
+    optional string location = 3;
+    optional string vid = 4;
+  }
+
+  repeated Caveat caveats = 3;
+  
+  required string signature = 4;
+}
