@@ -77,7 +77,7 @@ v = Verifier()
 def picture_access_validator(predicate):
     # in this case, predicate = 'picture_id = bobs_cool_cat.jpg'
     if predicate.split(' = ')[0] != 'picture_id':
-        return True
+        return False
     return predicate.split(' = ')[1] == 'bobs_cool_cat.jpg'
     
 # The verifier is informed of all relevant contextual information needed
