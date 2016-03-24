@@ -35,6 +35,7 @@ class Macaroon(object):
 
     @classmethod
     def deserialize(cls, serialized, serializer=None):
+        serialized = convert_to_string(serialized)
         serializer = serializer or BinarySerializer()
         if serialized:
             return serializer.deserialize(serialized)
