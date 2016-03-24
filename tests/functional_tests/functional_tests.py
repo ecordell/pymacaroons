@@ -95,6 +95,17 @@ cmUgGXusegRK8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'
             '197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67'
         )
 
+    def test_deserializing_with_binary(self):
+        m = Macaroon.deserialize(
+            'MDAxY2xvY2F0aW9uIGh0dHA6Ly9teWJhbmsvCjAwMjZpZGVudGlmaW\
+VyIHdlIHVzZWQgb3VyIHNlY3JldCBrZXkKMDAxNmNpZCB0ZXN0ID0gY2F2ZWF0CjAwMmZzaWduYXR1\
+cmUgGXusegRK8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'.encode('ascii')
+        )
+        assert_equal(
+            m.signature,
+            '197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c23dbd67'
+        )
+
     def test_deserializing_accepts_padding(self):
         m = Macaroon.deserialize(
             ('MDAxY2xvY2F0aW9uIGh0dHA6Ly9teWJhbmsvCjAwMjZpZGVudGlmaWVyIHdlIHVz'
