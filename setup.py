@@ -26,7 +26,7 @@ setup(
     long_description=long_description,
     install_requires=[
         'six>=1.8.0',
-        'libnacl>=1.3.6,<1.5',
+        'libnacl>=1.3.6,<1.6',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',
