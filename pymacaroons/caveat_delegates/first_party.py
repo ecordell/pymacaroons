@@ -34,7 +34,7 @@ class FirstPartyCaveatVerifierDelegate(BaseFirstPartyCaveatVerifierDelegate):
 
     def verify_first_party_caveat(self, verifier, caveat, signature):
         predicate = caveat.caveat_id
-        caveat_met = sum(callback(predicate)
+        caveat_met = all(callback(predicate)
                          for callback in verifier.callbacks)
         return caveat_met
 
