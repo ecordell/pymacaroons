@@ -15,7 +15,7 @@ class Caveat(object):
 
     @property
     def caveat_id(self):
-        return convert_to_string(self._caveat_id)
+        return self._caveat_id
 
     @property
     def verification_key_id(self):

@@ -1,5 +1,7 @@
 from .caveat import Caveat
 from .macaroon import Macaroon
+from .macaroon import MACAROON_V1
+from .macaroon import MACAROON_V2
 from .verifier import Verifier
 
 
@@ -7,6 +9,8 @@ __all__ = [
     'Macaroon',
     'Caveat',
     'Verifier',
+    'MACAROON_V1',
+    'MACAROON_V2'
 ]
 
 
