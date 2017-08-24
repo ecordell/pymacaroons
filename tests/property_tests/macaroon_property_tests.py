@@ -46,6 +46,6 @@ class TestMacaroon(object):
             version=MACAROON_V2
         )
         deserialized = Macaroon.deserialize(macaroon.serialize())
-        assert_equal(macaroon.identifier, deserialized.identifier)
+        assert_equal(macaroon.identifier_bytes, deserialized.identifier_bytes)
         assert_equal(macaroon.location, deserialized.location)
         assert_equal(macaroon.signature, deserialized.signature)

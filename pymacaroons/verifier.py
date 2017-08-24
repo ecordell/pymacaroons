@@ -57,7 +57,7 @@ class Verifier(object):
 
     def verify_discharge(self, root, discharge, key, discharge_macaroons=None):
         calculated_signature = hmac_digest(
-            key, discharge.identifier
+            key, discharge.identifier_bytes
         )
 
         calculated_signature = self._verify_caveats(

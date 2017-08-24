@@ -55,10 +55,9 @@ K8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'
         )
 
     def test_serializing_with_binary_v1(self):
-        identifier = base64.b64decode(u'AK2o+q0Aq9+bONkXw7ky7HAuhCLO9hhaMMc==')
         m = Macaroon(
             location='http://mybank/',
-            identifier=identifier,
+            identifier='we used our secret key',
             key='this is our super secret key; only we should know it',
             version=MACAROON_V1
         )
@@ -77,7 +76,7 @@ K8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'
         )
         m.add_first_party_caveat('test = caveat')
         n = Macaroon.deserialize(m.serialize())
-        assert_equal(m.identifier, n.identifier)
+        assert_equal(m.identifier_bytes, n.identifier_bytes)
         assert_equal(m.version, n.version)
 
     def test_serializing_v1(self):
@@ -101,8 +100,12 @@ K8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'
         )
         m.add_first_party_caveat('test = caveat')
         n = Macaroon.deserialize(m.serialize())
-        assert_equal(m.identifier, n.identifier)
+        assert_equal(m.identifier_bytes, n.identifier_bytes)
         assert_equal(m.version, n.version)
+
+    def test_deserializing_invalid(self):
+        with assert_raises(MacaroonDeserializationException) as cm:
+            Macaroon.deserialize("QA")
 
     def test_serializing_strips_padding(self):
         m = Macaroon(
@@ -200,7 +203,7 @@ cmUgGXusegRK8zMyhluSZuJtSTvdZopmDkTYjOGpmMI9vWcK'.encode('ascii')
             m.serialize(serializer=JsonSerializer()),
             serializer=JsonSerializer()
         )
-        assert_equal(m.identifier, n.identifier)
+        assert_equal(m.identifier_bytes, n.identifier_bytes)
 
     def test_serializing_json_v2(self):
         m = Macaroon(

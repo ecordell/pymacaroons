@@ -24,7 +24,7 @@ class FirstPartyCaveatDelegate(BaseFirstPartyCaveatDelegate):
         # Check it's valid utf-8 for first party caveats.
         # Will raise a unicode error if not.
         predicate.decode('utf-8')
-        caveat = Caveat(caveat_id=predicate)
+        caveat = Caveat(caveat_id=predicate, version=macaroon.version)
         macaroon.caveats.append(caveat)
         encode_key = binascii.unhexlify(macaroon.signature_bytes)
         macaroon.signature = sign_first_party_caveat(encode_key, predicate)
@@ -46,6 +46,6 @@ class FirstPartyCaveatVerifierDelegate(BaseFirstPartyCaveatVerifierDelegate):
         return binascii.unhexlify(
             sign_first_party_caveat(
                 signature,
-                caveat.caveat_id
+                caveat.caveat_id_bytes
             )
         )

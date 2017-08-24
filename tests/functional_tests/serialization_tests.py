@@ -68,7 +68,7 @@ class TestSerializationCompatibility(object):
 def assert_macaroon(m, discharge, version):
     assert_equal(m.location, 'my location')
     assert_equal(m.version, version)
-    assert_equal(m.identifier, b'my identifier')
+    assert_equal(m.identifier_bytes, b'my identifier')
     v = Verifier()
     v.satisfy_exact('fp caveat')
     verified = v.verify(

@@ -15,11 +15,6 @@ from pymacaroons.utils import (
 from pymacaroons.serializers.base_serializer import BaseSerializer
 from pymacaroons.exceptions import MacaroonSerializationException
 
-_LOCATION = 1
-_IDENTIFIER = 2
-_VID = 4
-_SIGNATURE = 6
-_EOS = 0
 
 PacketV2 = namedtuple('PacketV2', ['field_type', 'data'])
 
@@ -27,6 +22,11 @@ PacketV2 = namedtuple('PacketV2', ['field_type', 'data'])
 class BinarySerializer(BaseSerializer):
 
     PACKET_PREFIX_LENGTH = 4
+    _LOCATION = 1
+    _IDENTIFIER = 2
+    _VID = 4
+    _SIGNATURE = 6
+    _EOS = 0
 
     def serialize(self, macaroon):
         return urlsafe_b64encode(
@@ -63,21 +63,22 @@ class BinarySerializer(BaseSerializer):
         data = bytearray()
         data.append(MACAROON_V2)
         if macaroon.location is not None:
-            _append_packet(data, _LOCATION, convert_to_bytes(
+            self._append_packet(data, self._LOCATION, convert_to_bytes(
                 macaroon.location))
-        _append_packet(data, _IDENTIFIER, macaroon.identifier)
-        _append_packet(data, _EOS)
+            self._append_packet(data, self._IDENTIFIER,
+                                macaroon.identifier_bytes)
+        self._append_packet(data, self._EOS)
         for c in macaroon.caveats:
             if c.location is not None:
-                _append_packet(data, _LOCATION,
-                               convert_to_bytes(c.location))
-            _append_packet(data, _IDENTIFIER, convert_to_bytes(c.caveat_id))
+                self._append_packet(data, self._LOCATION,
+                                    convert_to_bytes(c.location))
+            self._append_packet(data, self._IDENTIFIER, c.caveat_id_bytes)
             if c.verification_key_id is not None:
-                _append_packet(data, _VID, convert_to_bytes(
+                self._append_packet(data, self._VID, convert_to_bytes(
                     c.verification_key_id))
-            _append_packet(data, _EOS)
-        _append_packet(data, _EOS)
-        _append_packet(data, _SIGNATURE, binascii.unhexlify(
+            self._append_packet(data, self._EOS)
+        self._append_packet(data, self._EOS)
+        self._append_packet(data, self._SIGNATURE, binascii.unhexlify(
             macaroon.signature_bytes))
         return bytes(data)
 
@@ -128,7 +129,8 @@ class BinarySerializer(BaseSerializer):
             elif key == b'identifier':
                 macaroon.identifier = value
             elif key == b'cid':
-                macaroon.caveats.append(Caveat(caveat_id=value))
+                macaroon.caveats.append(Caveat(caveat_id=value,
+                                               version=MACAROON_V1))
             elif key == b'vid':
                 macaroon.caveats[-1].verification_key_id = value
             elif key == b'cl':
@@ -154,12 +156,12 @@ class BinarySerializer(BaseSerializer):
 
         # skip the initial version byte.
         serialized = serialized[1:]
-        serialized, section = _parse_section_v2(serialized)
+        serialized, section = self._parse_section_v2(serialized)
         loc = ''
-        if len(section) > 0 and section[0].field_type == _LOCATION:
+        if len(section) > 0 and section[0].field_type == self._LOCATION:
             loc = section[0].data.decode('utf-8')
             section = section[1:]
-        if len(section) != 1 or section[0].field_type != _IDENTIFIER:
+        if len(section) != 1 or section[0].field_type != self._IDENTIFIER:
             raise MacaroonDeserializationException('invalid macaroon header')
         macaroon = Macaroon(
             identifier=section[0].data,
@@ -167,16 +169,16 @@ class BinarySerializer(BaseSerializer):
             version=MACAROON_V2,
         )
         while True:
-            rest, section = _parse_section_v2(serialized)
+            rest, section = self._parse_section_v2(serialized)
             serialized = rest
             if len(section) == 0:
                 break
-            cav = Caveat()
-            if len(section) > 0 and section[0].field_type == _LOCATION:
+            cav = Caveat(version=MACAROON_V2)
+            if len(section) > 0 and section[0].field_type == self._LOCATION:
                 cav.location = section[0].data.decode('utf-8')
                 section = section[1:]
 
-            if len(section) == 0 or section[0].field_type != _IDENTIFIER:
+            if len(section) == 0 or section[0].field_type != self._IDENTIFIER:
                 raise MacaroonDeserializationException(
                     'no identifier in caveat')
 
@@ -194,13 +196,13 @@ class BinarySerializer(BaseSerializer):
                 raise MacaroonDeserializationException(
                     'extra fields found in caveat')
 
-            if section[0].field_type != _VID:
+            if section[0].field_type != self._VID:
                 raise MacaroonDeserializationException(
                     'invalid field found in caveat')
             cav.verification_key_id = section[0].data
             macaroon.caveats.append(cav)
-        serialized, packet = _parse_packet_v2(serialized)
-        if packet.field_type != _SIGNATURE:
+        serialized, packet = self._parse_packet_v2(serialized)
+        if packet.field_type != self._SIGNATURE:
             raise MacaroonDeserializationException(
                 'unexpected field found instead of signature')
         macaroon.signature = binascii.hexlify(packet.data)
@@ -238,64 +240,62 @@ class BinarySerializer(BaseSerializer):
         value = packet[len(key) + 1:-1]
         return (key, value)
 
+    def _append_packet(self, data, field_type, packet_data=None):
+        _encode_uvarint(data, field_type)
+        if field_type != self._EOS:
+            _encode_uvarint(data, len(packet_data))
+            data.extend(packet_data)
 
-def _append_packet(data, field_type, packet_data=None):
-    _encode_uvarint(data, field_type)
-    if field_type != _EOS:
-        _encode_uvarint(data, len(packet_data))
-        data.extend(packet_data)
+    def _parse_section_v2(self, data):
+        ''' Parses a sequence of packets in data.
 
+        The sequence is terminated by a packet with a field type of EOS
+        :param data bytes to be deserialized.
+        :return: the rest of data and an array of packet V2
+        '''
 
-def _parse_section_v2(data):
-    ''' Parses a sequence of packets in data.
+        from pymacaroons.exceptions import MacaroonDeserializationException
 
-    The sequence is terminated by a packet with a field type of EOS
-    :param data bytes to be deserialized.
-    :return: the rest of data and an array of packet V2
-    '''
+        prev_field_type = -1
+        packets = []
+        while True:
+            if len(data) == 0:
+                raise MacaroonDeserializationException(
+                    'section extends past end of buffer')
+            rest, packet = self._parse_packet_v2(data)
+            if packet.field_type == self._EOS:
+                return rest, packets
+            if packet.field_type <= prev_field_type:
+                raise MacaroonDeserializationException('fields out of order')
+            packets.append(packet)
+            prev_field_type = packet.field_type
+            data = rest
 
-    from pymacaroons.exceptions import MacaroonDeserializationException
+    def _parse_packet_v2(self, data):
+        ''' Parses a V2 data packet at the start of the given data.
 
-    prev_field_type = -1
-    packets = []
-    while True:
-        if len(data) == 0:
+        The format of a packet is as follows:
+
+        field_type(varint) payload_len(varint) data[payload_len bytes]
+
+        apart from EOS which has no payload_en or data (it's a single zero
+        byte).
+
+        :param data:
+        :return: rest of data, PacketV2
+        '''
+        from pymacaroons.exceptions import MacaroonDeserializationException
+
+        ft, n = _decode_uvarint(data)
+        data = data[n:]
+        if ft == self._EOS:
+            return data, PacketV2(ft, None)
+        payload_len, n = _decode_uvarint(data)
+        data = data[n:]
+        if payload_len > len(data):
             raise MacaroonDeserializationException(
-                'section extends past end of buffer')
-        rest, packet = _parse_packet_v2(data)
-        if packet.field_type == _EOS:
-            return rest, packets
-        if packet.field_type <= prev_field_type:
-            raise MacaroonDeserializationException('fields out of order')
-        packets.append(packet)
-        prev_field_type = packet.field_type
-        data = rest
-
-
-def _parse_packet_v2(data):
-    ''' Parses a V2 data packet at the start of the given data.
-
-    The format of a packet is as follows:
-
-    field_type(varint) payload_len(varint) data[payload_len bytes]
-
-    apart from EOS which has no payload_en or data (it's a single zero byte).
-
-    :param data:
-    :return: rest of data, PacketV2
-    '''
-    from pymacaroons.exceptions import MacaroonDeserializationException
-
-    ft, n = _decode_uvarint(data)
-    data = data[n:]
-    if ft == _EOS:
-        return data, PacketV2(ft, None)
-    payload_len, n = _decode_uvarint(data)
-    data = data[n:]
-    if payload_len > len(data):
-        raise MacaroonDeserializationException(
-            'field data extends past end of buffer')
-    return data[payload_len:], PacketV2(ft, data[0:payload_len])
+                'field data extends past end of buffer')
+        return data[payload_len:], PacketV2(ft, data[0:payload_len])
 
 
 def _encode_uvarint(data, n):

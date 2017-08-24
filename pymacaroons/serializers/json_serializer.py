@@ -42,7 +42,7 @@ class JsonSerializer(object):
         @return JSON macaroon in v2 format.
         '''
         serialized = {}
-        _add_json_binary_field(macaroon.identifier, serialized, 'i')
+        _add_json_binary_field(macaroon.identifier_bytes, serialized, 'i')
         _add_json_binary_field(binascii.unhexlify(macaroon.signature_bytes),
                                serialized, 's')
 
@@ -85,7 +85,8 @@ class JsonSerializer(object):
                 ),
                 location=(
                     c['cl'] if c.get('cl') else None
-                )
+                ),
+                version=MACAROON_V1
             )
             caveats.append(caveat)
 
@@ -110,7 +111,8 @@ class JsonSerializer(object):
             caveat = Caveat(
                 caveat_id=_read_json_binary_field(c, 'i'),
                 verification_key_id=_read_json_binary_field(c, 'v'),
-                location=_read_json_binary_field(c, 'l')
+                location=_read_json_binary_field(c, 'l'),
+                version=MACAROON_V2
             )
             caveats.append(caveat)
         return Macaroon(
@@ -129,7 +131,7 @@ def _caveat_v1_to_dict(c):
     '''
     serialized = {}
     if len(c.caveat_id) > 0:
-        serialized['cid'] = utils.convert_to_string(c.caveat_id)
+        serialized['cid'] = c.caveat_id
     if c.verification_key_id:
         serialized['vid'] = utils.raw_urlsafe_b64encode(
             c.verification_key_id).decode('utf-8')
@@ -143,8 +145,8 @@ def _caveat_v2_to_dict(c):
     macaroon v2 format.
     '''
     serialized = {}
-    if len(c.caveat_id) > 0:
-        _add_json_binary_field(c.caveat_id, serialized, 'i')
+    if len(c.caveat_id_bytes) > 0:
+        _add_json_binary_field(c.caveat_id_bytes, serialized, 'i')
     if c.verification_key_id:
         _add_json_binary_field(c.verification_key_id, serialized, 'v')
     if c.location:

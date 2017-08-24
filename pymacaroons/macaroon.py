@@ -37,7 +37,7 @@ class Macaroon(object):
         self.third_party_caveat_delegate = ThirdPartyCaveatDelegate()
         if key:
             self.signature = create_initial_signature(
-                convert_to_bytes(key), self.identifier
+                convert_to_bytes(key), self.identifier_bytes
             )
 
     @classmethod
@@ -64,6 +64,12 @@ class Macaroon(object):
 
     @property
     def identifier(self):
+        if self.version == MACAROON_V1:
+            return convert_to_string(self._identifier)
+        return self._identifier
+
+    @property
+    def identifier_bytes(self):
         return self._identifier
 
     @identifier.setter
@@ -92,21 +98,18 @@ class Macaroon(object):
     def inspect(self):
         combined = 'location {loc}\n'.format(loc=self.location)
         try:
-            combined += 'identifier {id}\n'.format(id=convert_to_string(
-                self.identifier)
-            )
+            combined += 'identifier {id}\n'.format(id=self.identifier)
         except UnicodeEncodeError:
             combined += 'identifier64 {id}\n'.format(id=convert_to_string(
-                    standard_b64encode(self.identifier)
+                    standard_b64encode(self.identifier_bytes)
             ))
         for caveat in self.caveats:
             try:
-                combined += 'cid {cid}\n'.format(cid=convert_to_string(
-                    caveat.caveat_id
-                ))
+                combined += 'cid {cid}\n'.format(
+                    cid=convert_to_string(caveat.caveat_id))
             except UnicodeEncodeError:
                 combined += 'cid64 {cid}\n'.format(cid=convert_to_string(
-                    standard_b64encode(caveat.caveat_id)
+                    standard_b64encode(caveat.caveat_id_bytes)
                 ))
             if caveat.verification_key_id and caveat.location:
                 vid = convert_to_string(
