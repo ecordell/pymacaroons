@@ -13,6 +13,9 @@ from pymacaroons.utils import (
 from pymacaroons.caveat_delegates import (
     FirstPartyCaveatDelegate, ThirdPartyCaveatDelegate)
 
+MACAROON_V1 = 1
+MACAROON_V2 = 2
+
 
 class Macaroon(object):
 
@@ -21,7 +24,11 @@ class Macaroon(object):
                  identifier=None,
                  key=None,
                  caveats=None,
-                 signature=None):
+                 signature=None,
+                 version=MACAROON_V1):
+        if version > MACAROON_V2:
+            version = MACAROON_V2
+        self._version = version
         self.caveats = caveats or []
         self.location = location or ''
         self.identifier = identifier or ''
@@ -30,12 +37,11 @@ class Macaroon(object):
         self.third_party_caveat_delegate = ThirdPartyCaveatDelegate()
         if key:
             self.signature = create_initial_signature(
-                convert_to_bytes(key), convert_to_bytes(identifier)
+                convert_to_bytes(key), self.identifier_bytes
             )
 
     @classmethod
     def deserialize(cls, serialized, serializer=None):
-        serialized = convert_to_string(serialized)
         serializer = serializer or BinarySerializer()
         if serialized:
             return serializer.deserialize(serialized)
@@ -53,8 +59,18 @@ class Macaroon(object):
         self._location = convert_to_bytes(string_or_bytes)
 
     @property
+    def version(self):
+        return self._version
+
+    @property
     def identifier(self):
-        return convert_to_string(self._identifier)
+        if self.version == MACAROON_V1:
+            return convert_to_string(self._identifier)
+        return self._identifier
+
+    @property
+    def identifier_bytes(self):
+        return self._identifier
 
     @identifier.setter
     def identifier(self, string_or_bytes):
@@ -81,9 +97,20 @@ class Macaroon(object):
 
     def inspect(self):
         combined = 'location {loc}\n'.format(loc=self.location)
-        combined += 'identifier {id}\n'.format(id=self.identifier)
+        try:
+            combined += 'identifier {id}\n'.format(id=self.identifier)
+        except UnicodeEncodeError:
+            combined += 'identifier64 {id}\n'.format(id=convert_to_string(
+                    standard_b64encode(self.identifier_bytes)
+            ))
         for caveat in self.caveats:
-            combined += 'cid {cid}\n'.format(cid=caveat.caveat_id)
+            try:
+                combined += 'cid {cid}\n'.format(
+                    cid=convert_to_string(caveat.caveat_id))
+            except UnicodeEncodeError:
+                combined += 'cid64 {cid}\n'.format(cid=convert_to_string(
+                    standard_b64encode(caveat.caveat_id_bytes)
+                ))
             if caveat.verification_key_id and caveat.location:
                 vid = convert_to_string(
                     standard_b64encode(caveat.verification_key_id)
@@ -99,8 +126,16 @@ class Macaroon(object):
     def third_party_caveats(self):
         return [caveat for caveat in self.caveats if caveat.third_party()]
 
-    def prepare_for_request(self, macaroon):
-        protected = macaroon.copy()
+    def prepare_for_request(self, discharge_macaroon):
+        ''' Return a new discharge macaroon bound to the receiving macaroon's
+        current signature so that it can be used in a request.
+
+        This must be done before a discharge macaroon is sent to a server.
+
+        :param discharge_macaroon:
+        :return: bound discharge macaroon
+        '''
+        protected = discharge_macaroon.copy()
         return HashSignaturesBinder(self).bind(protected)
 
     def add_first_party_caveat(self, predicate, **kwargs):

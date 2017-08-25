@@ -1,12 +1,10 @@
 from __future__ import unicode_literals
 
-from mock import *
 from nose.tools import *
 from hypothesis import *
 from hypothesis.specifiers import *
 
-from six import text_type, binary_type
-from pymacaroons import Macaroon, Verifier
+from pymacaroons import Macaroon, MACAROON_V1, MACAROON_V2
 from pymacaroons.utils import convert_to_bytes
 
 
@@ -34,9 +32,20 @@ class TestMacaroon(object):
         macaroon = Macaroon(
             location=loc,
             identifier=key_id,
-            key=key
+            key=key,
+            version=MACAROON_V1
         )
         deserialized = Macaroon.deserialize(macaroon.serialize())
         assert_equal(macaroon.identifier, deserialized.identifier)
+        assert_equal(macaroon.location, deserialized.location)
+        assert_equal(macaroon.signature, deserialized.signature)
+        macaroon = Macaroon(
+            location=loc,
+            identifier=key_id,
+            key=key,
+            version=MACAROON_V2
+        )
+        deserialized = Macaroon.deserialize(macaroon.serialize())
+        assert_equal(macaroon.identifier_bytes, deserialized.identifier_bytes)
         assert_equal(macaroon.location, deserialized.location)
         assert_equal(macaroon.signature, deserialized.signature)

@@ -1,3 +1,4 @@
+import base64
 from hashlib import sha256
 import hmac
 import binascii
@@ -9,7 +10,7 @@ def convert_to_bytes(string_or_bytes):
     if string_or_bytes is None:
         return None
     if isinstance(string_or_bytes, text_type):
-        return string_or_bytes.encode('ascii')
+        return string_or_bytes.encode('utf-8')
     elif isinstance(string_or_bytes, binary_type):
         return string_or_bytes
     else:
@@ -22,7 +23,7 @@ def convert_to_string(string_or_bytes):
     if isinstance(string_or_bytes, text_type):
         return string_or_bytes
     elif isinstance(string_or_bytes, binary_type):
-        return string_or_bytes.decode('ascii')
+        return string_or_bytes.decode('utf-8')
     else:
         raise TypeError("Must be a string or bytes object.")
 
@@ -92,3 +93,39 @@ def equals(val1, val2):
     for x, y in zip(val1, val2):
         result |= ord(x) ^ ord(y)
     return result == 0
+
+
+def add_base64_padding(b):
+    '''Add padding to base64 encoded bytes.
+
+    Padding can be removed when sending the messages.
+
+    @param b bytes to be padded.
+    @return a padded bytes.
+    '''
+    return b + b'=' * (-len(b) % 4)
+
+
+def raw_b64decode(s):
+    if '_' or '-' in s:
+        return raw_urlsafe_b64decode(s)
+    else:
+        return base64.b64decode(add_base64_padding(s))
+
+
+def raw_urlsafe_b64decode(s):
+    '''Base64 decode with added padding and conversion to bytes.
+
+    @param s string decode
+    @return bytes decoded
+    '''
+    return base64.urlsafe_b64decode(add_base64_padding(s.encode('utf-8')))
+
+
+def raw_urlsafe_b64encode(b):
+    '''Base64 encode with padding removed.
+
+    @param s string decode
+    @return bytes decoded
+    '''
+    return base64.urlsafe_b64encode(b).rstrip(b'=')

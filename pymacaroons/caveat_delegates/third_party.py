@@ -39,7 +39,8 @@ class ThirdPartyCaveatDelegate(BaseThirdPartyCaveatDelegate):
         caveat = Caveat(
             caveat_id=key_id,
             location=location,
-            verification_key_id=verification_key_id
+            verification_key_id=verification_key_id,
+            version=macaroon.version
         )
         macaroon.caveats.append(caveat)
         encode_key = binascii.unhexlify(macaroon.signature_bytes)
@@ -85,14 +86,15 @@ class ThirdPartyCaveatVerifierDelegate(BaseThirdPartyCaveatVerifierDelegate):
 
     def _caveat_macaroon(self, caveat, discharge_macaroons):
         # TODO: index discharge macaroons by identifier
-        caveat_macaroon = next((m for m in discharge_macaroons
-                                if m.identifier == caveat.caveat_id), None)
+        caveat_macaroon = next(
+            (m for m in discharge_macaroons
+             if m.identifier_bytes == caveat.caveat_id_bytes), None)
 
         if not caveat_macaroon:
             raise MacaroonUnmetCaveatException(
                 'Caveat not met. '
                 'No discharge macaroon found for identifier: ' +
-                caveat.caveat_id
+                caveat.caveat_id_bytes
             )
 
         return caveat_macaroon

@@ -1,4 +1,4 @@
-from pymacaroons.utils import convert_to_bytes, convert_to_string
+from pymacaroons.utils import convert_to_bytes
 
 
 class BaseFieldEncryptor(object):
@@ -9,7 +9,7 @@ class BaseFieldEncryptor(object):
 
     @property
     def signifier(self):
-        return convert_to_string(self._signifier)
+        return convert_to_bytes(self._signifier)
 
     @signifier.setter
     def signifier(self, string_or_bytes):

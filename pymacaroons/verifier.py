@@ -57,7 +57,7 @@ class Verifier(object):
 
     def verify_discharge(self, root, discharge, key, discharge_macaroons=None):
         calculated_signature = hmac_digest(
-            key, discharge._identifier
+            key, discharge.identifier_bytes
         )
 
         calculated_signature = self._verify_caveats(
@@ -72,7 +72,7 @@ class Verifier(object):
             )
 
         if not self._signatures_match(
-                discharge.signature,
+                discharge.signature_bytes,
                 binascii.hexlify(calculated_signature)):
             raise MacaroonInvalidSignatureException('Signatures do not match.')
 
@@ -119,6 +119,6 @@ class Verifier(object):
 
     def _signatures_match(self, macaroon_signature, computed_signature):
         return constant_time_compare(
-            convert_to_string(macaroon_signature),
-            convert_to_string(computed_signature)
+            convert_to_bytes(macaroon_signature),
+            convert_to_bytes(computed_signature)
         )

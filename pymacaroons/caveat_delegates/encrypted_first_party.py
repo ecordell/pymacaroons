@@ -44,7 +44,7 @@ class EncryptedFirstPartyCaveatVerifierDelegate(
         )
 
     def verify_first_party_caveat(self, verifier, caveat, signature):
-        predicate = caveat.caveat_id
+        predicate = caveat.caveat_id_bytes
 
         for signifier, encryptor in iteritems(self.field_encryptors):
             if predicate.startswith(signifier):

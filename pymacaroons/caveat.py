@@ -8,14 +8,26 @@ class Caveat(object):
     def __init__(self,
                  caveat_id=None,
                  verification_key_id=None,
-                 location=None):
+                 location=None,
+                 version=None):
+        from pymacaroons.macaroon import MACAROON_V1
         self.caveat_id = caveat_id
         self.verification_key_id = verification_key_id
         self.location = location
+        if version is None:
+            version = MACAROON_V1
+        self._version = version
 
     @property
     def caveat_id(self):
-        return convert_to_string(self._caveat_id)
+        from pymacaroons.macaroon import MACAROON_V1
+        if self._version == MACAROON_V1:
+            return convert_to_string(self._caveat_id)
+        return self._caveat_id
+
+    @property
+    def caveat_id_bytes(self):
+        return self._caveat_id
 
     @property
     def verification_key_id(self):
@@ -44,8 +56,12 @@ class Caveat(object):
         return self._verification_key_id is not None
 
     def to_dict(self):
+        try:
+            cid = convert_to_string(self.caveat_id)
+        except UnicodeEncodeError:
+            cid = convert_to_string(standard_b64encode(self.caveat_id_bytes))
         return {
-            'cid': self.caveat_id,
+            'cid': cid,
             'vid': (
                 standard_b64encode(self.verification_key_id)
                 if self.verification_key_id else None
