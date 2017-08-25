@@ -17,7 +17,7 @@ env:
   - TOX_ENV=py33
   - TOX_ENV=py34
   - TOX_ENV=pypy
-  - TOX_ENV=pypy3
+  - TOX_ENV=pypy3.3-5.5-alpha
   - TOX_ENV=docs
   - TOX_ENV=flake8
   - TOX_ENV=coverage
