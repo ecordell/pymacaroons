@@ -60,14 +60,15 @@ class ThirdPartyCaveatVerifierDelegate(BaseThirdPartyCaveatVerifierDelegate):
     def verify_third_party_caveat(self,
                                   verifier,
                                   caveat,
-                                  root_macaroon,
+                                  root,
+                                  macaroon,
                                   discharge_macaroons,
                                   signature):
         caveat_macaroon = self._caveat_macaroon(caveat, discharge_macaroons)
         caveat_key = self._extract_caveat_key(signature, caveat)
 
         caveat_met = verifier.verify_discharge(
-            root_macaroon,
+            root,
             caveat_macaroon,
             caveat_key,
             discharge_macaroons=discharge_macaroons

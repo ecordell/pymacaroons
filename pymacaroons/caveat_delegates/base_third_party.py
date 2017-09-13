@@ -29,7 +29,8 @@ class BaseThirdPartyCaveatVerifierDelegate(object):
     def verify_third_party_caveat(self,
                                   verifier,
                                   caveat,
-                                  root_macaroon,
+                                  root,
+                                  macaroon,
                                   discharge_macaroons,
                                   signature):
         pass

@@ -61,7 +61,7 @@ class Verifier(object):
         )
 
         calculated_signature = self._verify_caveats(
-            discharge, discharge_macaroons, calculated_signature
+            root, discharge, discharge_macaroons, calculated_signature
         )
 
         if root != discharge:
@@ -74,20 +74,22 @@ class Verifier(object):
         if not self._signatures_match(
                 discharge.signature_bytes,
                 binascii.hexlify(calculated_signature)):
-            raise MacaroonInvalidSignatureException('Signatures do not match.')
+            raise MacaroonInvalidSignatureException('Signatures do not match')
 
         return True
 
-    def _verify_caveats(self, macaroon, discharge_macaroons, signature):
+    def _verify_caveats(self, root, macaroon, discharge_macaroons, signature):
         for caveat in macaroon.caveats:
-            if self._caveat_met(caveat,
+            if self._caveat_met(root,
+                                caveat,
                                 macaroon,
                                 discharge_macaroons,
                                 signature):
                 signature = self._update_signature(caveat, signature)
         return signature
 
-    def _caveat_met(self, caveat, macaroon, discharge_macaroons, signature):
+    def _caveat_met(self, root, caveat, macaroon,
+                    discharge_macaroons, signature):
         if caveat.first_party():
             return (
                 self
@@ -99,7 +101,8 @@ class Verifier(object):
                 self
                 .third_party_caveat_verifier_delegate
                 .verify_third_party_caveat(
-                    self, caveat, macaroon, discharge_macaroons, signature
+                    self, caveat, root, macaroon,
+                    discharge_macaroons, signature,
                 )
             )
 
