@@ -409,6 +409,25 @@ never use the same secret twice',
         )
         assert_true(verified)
 
+    def test_verify_third_party_caveats_multi_level(self):
+      # See https://github.com/ecordell/pymacaroons/issues/37
+      root = Macaroon(location="", identifier="root-id", key="root-key")
+      root.add_third_party_caveat("bob", "bob-caveat-root-key", "bob-is-great")
+
+      # Create a discharge macaroon that requires a secondary discharge.
+      discharge1 = Macaroon(location="bob", identifier="bob-is-great", key="bob-caveat-root-key")
+      discharge1.add_third_party_caveat("barbara", "barbara-caveat-root-key", "barbara-is-great")
+
+      # Create the secondary discharge macaroon.
+      discharge2 = Macaroon(location="barbara", identifier="barbara-is-great", key="barbara-caveat-root-key")
+
+      # Prepare the discharge macaroons for request.
+      discharge1 = root.prepare_for_request(discharge1)
+      discharge2 = root.prepare_for_request(discharge2)
+
+      verified = Verifier().verify(root, "root-key", [discharge1, discharge2])
+      assert_true(verified)
+
     @patch('libnacl.secret.libnacl.utils.rand_nonce')
     def test_inspect(self, rand_nonce):
         # use a fixed nonce to ensure the same signature
