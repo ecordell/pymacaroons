@@ -93,9 +93,8 @@ class ThirdPartyCaveatVerifierDelegate(BaseThirdPartyCaveatVerifierDelegate):
 
         if not caveat_macaroon:
             raise MacaroonUnmetCaveatException(
-                'Caveat not met. '
-                'No discharge macaroon found for identifier: ' +
-                caveat.caveat_id_bytes
+                'Caveat not met. No discharge macaroon found for identifier: '
+                '{}'.format(caveat.caveat_id_bytes)
             )
 
         return caveat_macaroon
