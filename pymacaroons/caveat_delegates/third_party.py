@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 import binascii
 
-from libnacl.secret import SecretBox
+from nacl.secret import SecretBox
 
 from pymacaroons import Caveat
 from pymacaroons.utils import (

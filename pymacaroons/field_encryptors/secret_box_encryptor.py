@@ -1,6 +1,6 @@
 from base64 import standard_b64encode, standard_b64decode
 
-from libnacl.secret import SecretBox
+from nacl.secret import SecretBox
 
 from pymacaroons.field_encryptors.base_field_encryptor import (
     BaseFieldEncryptor
