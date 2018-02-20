@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from nose.tools import *
 
-from libnacl import crypto_box_NONCEBYTES
+from nacl.bindings import crypto_box_NONCEBYTES
 from pymacaroons import Macaroon, Verifier
 from pymacaroons.caveat_delegates import EncryptedFirstPartyCaveatDelegate, EncryptedFirstPartyCaveatVerifierDelegate
 from pymacaroons.field_encryptors import SecretBoxEncryptor

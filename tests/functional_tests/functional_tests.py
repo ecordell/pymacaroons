@@ -4,7 +4,7 @@ import json
 from mock import *
 from nose.tools import *
 
-from libnacl import crypto_box_NONCEBYTES
+from nacl.bindings import crypto_box_NONCEBYTES
 from pymacaroons import Macaroon, MACAROON_V1, MACAROON_V2, Verifier
 from pymacaroons.serializers import *
 from pymacaroons.exceptions import *
@@ -296,7 +296,7 @@ key", "signature": "197bac7a044af33332865b9266e26d493bdd668a660e44d88ce1a998c2\
         )
         assert_true(verified)
 
-    @patch('libnacl.secret.libnacl.utils.rand_nonce')
+    @patch('nacl.secret.random')
     def test_third_party_caveat(self, rand_nonce):
         # use a fixed nonce to ensure the same signature
         rand_nonce.return_value = truncate_or_pad(
@@ -344,7 +344,7 @@ never use the same secret twice',
             n.signature
         )
 
-    @patch('libnacl.secret.libnacl.utils.rand_nonce')
+    @patch('nacl.secret.random')
     def test_prepare_for_request(self, rand_nonce):
         # use a fixed nonce to ensure the same signature
         rand_nonce.return_value = truncate_or_pad(
@@ -428,7 +428,7 @@ never use the same secret twice',
       verified = Verifier().verify(root, "root-key", [discharge1, discharge2])
       assert_true(verified)
 
-    @patch('libnacl.secret.libnacl.utils.rand_nonce')
+    @patch('nacl.secret.random')
     def test_inspect(self, rand_nonce):
         # use a fixed nonce to ensure the same signature
         rand_nonce.return_value = truncate_or_pad(
