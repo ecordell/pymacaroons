@@ -16,6 +16,6 @@ __all__ = [
 
 __author__ = 'Evan Cordell'
 
-__version__ = "0.12.0"
+__version__ = "0.13.0"
 __version_info__ = tuple(__version__.split('.'))
 __short_version__ = __version__
