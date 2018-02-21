@@ -3,4 +3,4 @@ recursive-exclude docs/_templates *
 recursive-exclude docs/_build *
 include *.py
 include README.md
-include LICENSE.md
+include LICENSE
