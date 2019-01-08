@@ -69,11 +69,10 @@ def assert_macaroon(m, discharge, version):
     assert_equal(m.location, 'my location')
     assert_equal(m.version, version)
     assert_equal(m.identifier_bytes, b'my identifier')
-    v = Verifier()
+    v = Verifier(discharge_macaroons=[discharge])
     v.satisfy_exact('fp caveat')
     verified = v.verify(
         m,
         "my secret key",
-        discharge_macaroons=[discharge],
     )
     assert_true(verified)

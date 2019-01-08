@@ -22,7 +22,7 @@ from pymacaroons.utils import (
 
 class Verifier(object):
 
-    def __init__(self):
+    def __init__(self, discharge_macaroons=None):
         self.predicates = []
         self.callbacks = [self.verify_exact]
         self.calculated_signature = None
@@ -30,7 +30,9 @@ class Verifier(object):
             FirstPartyCaveatVerifierDelegate()
         )
         self.third_party_caveat_verifier_delegate = (
-            ThirdPartyCaveatVerifierDelegate()
+            ThirdPartyCaveatVerifierDelegate(
+                discharge_macaroons=discharge_macaroons
+            )
         )
 
     def satisfy_exact(self, predicate):
@@ -46,22 +48,21 @@ class Verifier(object):
     def verify_exact(self, predicate):
         return predicate in self.predicates
 
-    def verify(self, macaroon, key, discharge_macaroons=None):
+    def verify(self, macaroon, key):
         key = generate_derived_key(convert_to_bytes(key))
         return self.verify_discharge(
             macaroon,
             macaroon,
             key,
-            discharge_macaroons
         )
 
-    def verify_discharge(self, root, discharge, key, discharge_macaroons=None):
+    def verify_discharge(self, root, discharge, key):
         calculated_signature = hmac_digest(
             key, discharge.identifier_bytes
         )
 
         calculated_signature = self._verify_caveats(
-            root, discharge, discharge_macaroons, calculated_signature
+            root, discharge, calculated_signature
         )
 
         if root != discharge:
@@ -78,18 +79,16 @@ class Verifier(object):
 
         return True
 
-    def _verify_caveats(self, root, macaroon, discharge_macaroons, signature):
+    def _verify_caveats(self, root, macaroon, signature):
         for caveat in macaroon.caveats:
             if self._caveat_met(root,
                                 caveat,
                                 macaroon,
-                                discharge_macaroons,
                                 signature):
                 signature = self._update_signature(caveat, signature)
         return signature
 
-    def _caveat_met(self, root, caveat, macaroon,
-                    discharge_macaroons, signature):
+    def _caveat_met(self, root, caveat, macaroon, signature):
         if caveat.first_party():
             return (
                 self
@@ -101,8 +100,7 @@ class Verifier(object):
                 self
                 .third_party_caveat_verifier_delegate
                 .verify_third_party_caveat(
-                    self, caveat, root, macaroon,
-                    discharge_macaroons, signature,
+                    self, caveat, root, macaroon, signature,
                 )
             )
 

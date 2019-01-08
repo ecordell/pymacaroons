@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/ecordell/pymacaroons.svg?branch=master)](https://travis-ci.org/ecordell/pymacaroons) [![Coverage Status](https://coveralls.io/repos/ecordell/pymacaroons/badge.png)](https://coveralls.io/r/ecordell/pymacaroons) [![Downloads](https://img.shields.io/pypi/dd/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/) [![Latest Version](https://img.shields.io/pypi/v/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/) [![Supported Python versions](https://img.shields.io/pypi/pyversions/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/) [![Supported Python implementations](https://img.shields.io/pypi/implementation/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/) [![Development Status](https://img.shields.io/pypi/status/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/) [![Wheel Status](https://img.shields.io/pypi/wheel/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/) [![License](https://img.shields.io/pypi/l/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/)
 
-This is a Python implementation of Macaroons. It is still under active development but is in a useable state - please report any bugs in the issue tracker.
+This is a Python implementation of Macaroons. PyMacaroons is stable and does not change frequently. Please see the GitHub issues for the current roadmap. 
 
 ## What is a Macaroon? 
 Macaroons, like cookies, are a form of bearer credential. Unlike opaque tokens, macaroons embed *caveats* that define specific authorization requirements for the *target service*, the service that issued the root macaroon and which is capable of verifying the integrity of macaroons it recieves. 
@@ -12,14 +12,6 @@ Macaroons allow for delegation and attenuation of authorization. They are simple
 For a simple example, see the [Quickstart Guide](#quickstart). For more in-depth examples check out the [functional tests](https://github.com/ecordell/pymacaroons/blob/master/tests/functional_tests/functional_tests.py) and [references](#references-and-further-reading).
 
 ## Installing 
-
-PyMacaroons requires a sodium library like libsodium or tweetnacl to be installed on the host system.
-
-To install libsodium on mac, simply run:
-
-    brew install libsodium
-
-For other systems, see the [libsodium documentation](http://doc.libsodium.org/).
 
 To install PyMacaroons:
 

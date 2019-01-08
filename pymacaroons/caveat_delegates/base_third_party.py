@@ -31,7 +31,6 @@ class BaseThirdPartyCaveatVerifierDelegate(object):
                                   caveat,
                                   root,
                                   macaroon,
-                                  discharge_macaroons,
                                   signature):
         pass
 
