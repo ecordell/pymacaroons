@@ -398,14 +398,13 @@ never use the same secret twice'
         discharge.add_first_party_caveat('time < 2015-01-01T00:00')
         protected = m.prepare_for_request(discharge)
 
-        v = Verifier()
+        v = Verifier(discharge_macaroons=[protected])
         v.satisfy_exact('account = 3735928559')
         v.satisfy_exact('time < 2015-01-01T00:00')
         verified = v.verify(
             m,
             'this is a different super-secret key; \
-never use the same secret twice',
-            discharge_macaroons=[protected]
+never use the same secret twice'
         )
         assert_true(verified)
 
@@ -425,7 +424,7 @@ never use the same secret twice',
       discharge1 = root.prepare_for_request(discharge1)
       discharge2 = root.prepare_for_request(discharge2)
 
-      verified = Verifier().verify(root, "root-key", [discharge1, discharge2])
+      verified = Verifier(discharge_macaroons=[discharge1, discharge2]).verify(root, "root-key")
       assert_true(verified)
 
     @patch('nacl.secret.random')
@@ -452,3 +451,12 @@ never use the same secret twice',
             'vid AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA68NYajhiFuHnKGSNcVhkAwgbs0VZ0yK2o+q0Aq9+bONkXw7ky7HAuhCLO9hhaMMc\n'
             'cl http://auth.mybank/\n'
             'signature 7a9289bfbb92d725f748bbcb4f3e04e56b7021513ebeed8411bfba10a16a662e'))
+      
+    @raises(MacaroonUnmetCaveatException)
+    def test_mutual_discharge(self):
+        m1 = Macaroon(location="", identifier="root-id", key="root-key")
+        m1.add_third_party_caveat("bob", "bob-caveat-root-key", "bob-is-great")
+        m2 = Macaroon(location="bob", identifier="bob-is-great", key="bob-caveat-root-key")
+        m2.add_third_party_caveat("charlie", "bob-caveat-root-key", "bob-is-great")
+        m2 = m1.prepare_for_request(m2)
+        Verifier(discharge_macaroons=[m2]).verify(m1, "root-key")

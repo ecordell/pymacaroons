@@ -54,25 +54,35 @@ class ThirdPartyCaveatDelegate(BaseThirdPartyCaveatDelegate):
 
 class ThirdPartyCaveatVerifierDelegate(BaseThirdPartyCaveatVerifierDelegate):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, discharge_macaroons=None, *args, **kwargs):
         super(ThirdPartyCaveatVerifierDelegate, self).__init__(*args, **kwargs)
+        if discharge_macaroons:
+            self.discharge_macaroons = {
+                m.identifier_bytes: m for m in discharge_macaroons
+            }
 
     def verify_third_party_caveat(self,
                                   verifier,
                                   caveat,
                                   root,
                                   macaroon,
-                                  discharge_macaroons,
                                   signature):
-        caveat_macaroon = self._caveat_macaroon(caveat, discharge_macaroons)
+        caveat_macaroon = self._caveat_macaroon(caveat)
         caveat_key = self._extract_caveat_key(signature, caveat)
+
+        discharge = self.discharge_macaroons[caveat.caveat_id_bytes]
+        del self.discharge_macaroons[caveat.caveat_id_bytes]
 
         caveat_met = verifier.verify_discharge(
             root,
             caveat_macaroon,
             caveat_key,
-            discharge_macaroons=discharge_macaroons
         )
+
+        # if the caveat wasn't successfully discharged,
+        # restore the discharge macaroon to the available set
+        if not caveat_met:
+            self.discharge_macaroons[caveat.caveat_id_bytes] = discharge
 
         return caveat_met
 
@@ -85,11 +95,9 @@ class ThirdPartyCaveatVerifierDelegate(BaseThirdPartyCaveatVerifierDelegate):
             )
         )
 
-    def _caveat_macaroon(self, caveat, discharge_macaroons):
-        # TODO: index discharge macaroons by identifier
-        caveat_macaroon = next(
-            (m for m in discharge_macaroons
-             if m.identifier_bytes == caveat.caveat_id_bytes), None)
+    def _caveat_macaroon(self, caveat):
+        caveat_macaroon = self.discharge_macaroons.get(
+            caveat.caveat_id_bytes, None)
 
         if not caveat_macaroon:
             raise MacaroonUnmetCaveatException(
