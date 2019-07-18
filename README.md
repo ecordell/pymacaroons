@@ -122,7 +122,7 @@ PyMacaroons, libmacaroons, and Ruby-Macaroons all use the same underlying crypto
 ## References and Further Reading
 
 - [The Macaroon Paper](http://research.google.com/pubs/pub41892.html)
-- [Mozilla Macaroon Tech Talk](https://air.mozilla.org/macaroons-cookies-with-contextual-caveats-for-decentralized-authorization-in-the-cloud/)
+- [Mozilla Macaroon Tech Talk](https://www.youtube.com/watch?v=CGBZO5n_SUg)
 - [libmacaroons](https://github.com/rescrv/libmacaroons)
 - [Ruby-Macaroons](https://github.com/localmed/ruby-macaroons)
 - [libnacl](https://github.com/saltstack/libnacl)
