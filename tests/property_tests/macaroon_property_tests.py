@@ -1,6 +1,5 @@
 from __future__ import unicode_literals
 
-from nose.tools import *
 from hypothesis import *
 from hypothesis.specifiers import *
 
@@ -36,9 +35,9 @@ class TestMacaroon(object):
             version=MACAROON_V1
         )
         deserialized = Macaroon.deserialize(macaroon.serialize())
-        assert_equal(macaroon.identifier, deserialized.identifier)
-        assert_equal(macaroon.location, deserialized.location)
-        assert_equal(macaroon.signature, deserialized.signature)
+        assert macaroon.identifier == deserialized.identifier
+        assert macaroon.location == deserialized.location
+        assert macaroon.signature == deserialized.signature
         macaroon = Macaroon(
             location=loc,
             identifier=key_id,
@@ -46,6 +45,6 @@ class TestMacaroon(object):
             version=MACAROON_V2
         )
         deserialized = Macaroon.deserialize(macaroon.serialize())
-        assert_equal(macaroon.identifier_bytes, deserialized.identifier_bytes)
-        assert_equal(macaroon.location, deserialized.location)
-        assert_equal(macaroon.signature, deserialized.signature)
+        assert macaroon.identifier_bytes == deserialized.identifier_bytes
+        assert macaroon.location == deserialized.location
+        assert macaroon.signature == deserialized.signature
