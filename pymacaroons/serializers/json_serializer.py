@@ -4,25 +4,27 @@ from pymacaroons import utils
 
 
 class JsonSerializer(object):
-    '''Serializer used to produce JSON macaroon format v1.
-    '''
-    def serialize(self, m):
-        '''Serialize the macaroon in JSON format indicated by the version field.
+    """Serializer used to produce JSON macaroon format v1.
+    """
 
-        @param macaroon the macaroon to serialize.
+    def serialize(self, m):
+        """Serialize the macaroon in JSON format indicated by the version
+        field.
+
+        @param m the macaroon to serialize.
         @return JSON macaroon.
-        '''
+        """
         from pymacaroons import macaroon
         if m.version == macaroon.MACAROON_V1:
             return self._serialize_v1(m)
         return self._serialize_v2(m)
 
     def _serialize_v1(self, macaroon):
-        '''Serialize the macaroon in JSON format v1.
+        """Serialize the macaroon in JSON format v1.
 
         @param macaroon the macaroon to serialize.
         @return JSON macaroon.
-        '''
+        """
         serialized = {
             'identifier': utils.convert_to_string(macaroon.identifier),
             'signature': macaroon.signature,
@@ -36,11 +38,11 @@ class JsonSerializer(object):
         return json.dumps(serialized)
 
     def _serialize_v2(self, macaroon):
-        '''Serialize the macaroon in JSON format v2.
+        """Serialize the macaroon in JSON format v2.
 
         @param macaroon the macaroon to serialize.
         @return JSON macaroon in v2 format.
-        '''
+        """
         serialized = {}
         _add_json_binary_field(macaroon.identifier_bytes, serialized, 'i')
         _add_json_binary_field(binascii.unhexlify(macaroon.signature_bytes),
@@ -55,28 +57,28 @@ class JsonSerializer(object):
         return json.dumps(serialized)
 
     def deserialize(self, serialized):
-        '''Deserialize a JSON macaroon depending on the format.
+        """Deserialize a JSON macaroon depending on the format.
 
         @param serialized the macaroon in JSON format.
         @return the macaroon object.
-        '''
+        """
         deserialized = json.loads(serialized)
         if deserialized.get('identifier') is None:
             return self._deserialize_v2(deserialized)
         else:
             return self._deserialize_v1(deserialized)
 
-    def _deserialize_v1(self, deserialized):
-        '''Deserialize a JSON macaroon in v1 format.
+    def _deserialize_v1(self, serialized):
+        """Deserialize a JSON macaroon in v1 format.
 
         @param serialized the macaroon in v1 JSON format.
         @return the macaroon object.
-        '''
+        """
         from pymacaroons.macaroon import Macaroon, MACAROON_V1
         from pymacaroons.caveat import Caveat
 
         caveats = []
-        for c in deserialized.get('caveats', []):
+        for c in serialized.get('caveats', []):
             caveat = Caveat(
                 caveat_id=c['cid'],
                 verification_key_id=(
@@ -91,23 +93,23 @@ class JsonSerializer(object):
             caveats.append(caveat)
 
         return Macaroon(
-            location=deserialized.get('location'),
-            identifier=deserialized['identifier'],
+            location=serialized.get('location'),
+            identifier=serialized['identifier'],
             caveats=caveats,
-            signature=deserialized['signature'],
+            signature=serialized['signature'],
             version=MACAROON_V1
         )
 
-    def _deserialize_v2(self, deserialized):
-        '''Deserialize a JSON macaroon v2.
+    def _deserialize_v2(self, serialized):
+        """Deserialize a JSON macaroon v2.
 
         @param serialized the macaroon in JSON format v2.
         @return the macaroon object.
-        '''
+        """
         from pymacaroons.macaroon import Macaroon, MACAROON_V2
         from pymacaroons.caveat import Caveat
         caveats = []
-        for c in deserialized.get('c', []):
+        for c in serialized.get('c', []):
             caveat = Caveat(
                 caveat_id=_read_json_binary_field(c, 'i'),
                 verification_key_id=_read_json_binary_field(c, 'v'),
@@ -116,19 +118,19 @@ class JsonSerializer(object):
             )
             caveats.append(caveat)
         return Macaroon(
-            location=_read_json_binary_field(deserialized, 'l'),
-            identifier=_read_json_binary_field(deserialized, 'i'),
+            location=_read_json_binary_field(serialized, 'l'),
+            identifier=_read_json_binary_field(serialized, 'i'),
             caveats=caveats,
             signature=binascii.hexlify(
-                _read_json_binary_field(deserialized, 's')),
+                _read_json_binary_field(serialized, 's')),
             version=MACAROON_V2
         )
 
 
 def _caveat_v1_to_dict(c):
-    ''' Return a caveat as a dictionary for export as the JSON
+    """ Return a caveat as a dictionary for export as the JSON
     macaroon v1 format.
-    '''
+    """
     serialized = {}
     if len(c.caveat_id) > 0:
         serialized['cid'] = c.caveat_id
@@ -141,9 +143,9 @@ def _caveat_v1_to_dict(c):
 
 
 def _caveat_v2_to_dict(c):
-    ''' Return a caveat as a dictionary for export as the JSON
+    """ Return a caveat as a dictionary for export as the JSON
     macaroon v2 format.
-    '''
+    """
     serialized = {}
     if len(c.caveat_id_bytes) > 0:
         _add_json_binary_field(c.caveat_id_bytes, serialized, 'i')
@@ -155,12 +157,12 @@ def _caveat_v2_to_dict(c):
 
 
 def _add_json_binary_field(b, serialized, field):
-    ''' Set the given field to the given val (a bytearray) in the serialized
+    """ Set the given field to the given val (a bytearray) in the serialized
     dictionary.
 
     If the value isn't valid utf-8, we base64 encode it and use field+"64"
     as the field name.
-    '''
+    """
     try:
         val = b.decode("utf-8")
         serialized[field] = val
@@ -170,8 +172,8 @@ def _add_json_binary_field(b, serialized, field):
 
 
 def _read_json_binary_field(deserialized, field):
-    ''' Read the value of a JSON field that may be string or base64-encoded.
-    '''
+    """ Read the value of a JSON field that may be string or base64-encoded.
+    """
     val = deserialized.get(field)
     if val is not None:
         return utils.convert_to_bytes(val)

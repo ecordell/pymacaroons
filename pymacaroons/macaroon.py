@@ -101,7 +101,7 @@ class Macaroon(object):
             combined += 'identifier {id}\n'.format(id=self.identifier)
         except UnicodeEncodeError:
             combined += 'identifier64 {id}\n'.format(id=convert_to_string(
-                    standard_b64encode(self.identifier_bytes)
+                standard_b64encode(self.identifier_bytes)
             ))
         for caveat in self.caveats:
             try:
