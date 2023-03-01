@@ -1,6 +1,13 @@
 # PyMacaroons
 
-[![Build Status](https://travis-ci.org/ecordell/pymacaroons.svg?branch=master)](https://travis-ci.org/ecordell/pymacaroons) [![Coverage Status](https://coveralls.io/repos/ecordell/pymacaroons/badge.png)](https://coveralls.io/r/ecordell/pymacaroons) [![Downloads](https://img.shields.io/pypi/dd/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/) [![Latest Version](https://img.shields.io/pypi/v/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/) [![Supported Python versions](https://img.shields.io/pypi/pyversions/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/) [![Supported Python implementations](https://img.shields.io/pypi/implementation/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/) [![Development Status](https://img.shields.io/pypi/status/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/) [![Wheel Status](https://img.shields.io/pypi/wheel/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/) [![License](https://img.shields.io/pypi/l/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/)
+[![Build Status](https://github.com/ecordell/pymacaroons/workflows/CI/badge.svg?branch=master)](https://github.com/ecordell/pymacaroons/actions?workflow=CI)
+[![Downloads](https://img.shields.io/pypi/dd/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/)
+[![Latest Version](https://img.shields.io/pypi/v/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/)
+[![Supported Python versions](https://img.shields.io/pypi/pyversions/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/)
+[![Supported Python implementations](https://img.shields.io/pypi/implementation/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/)
+[![Development Status](https://img.shields.io/pypi/status/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/)
+[![Wheel Status](https://img.shields.io/pypi/wheel/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/)
+[![License](https://img.shields.io/pypi/l/pymacaroons.svg)](https://pypi.python.org/pypi/pymacaroons/)
 
 This is a Python implementation of Macaroons. PyMacaroons is stable and does not change frequently. Please see the GitHub issues for the current roadmap. 
 
@@ -97,7 +104,7 @@ The latest documentation can always be found on [ReadTheDocs](http://pymacaroons
 
 ## Python notes
 
-Compatible with Python 2 and 3. CI builds are generated for 2.6, 2.7, 3.3 and 3.4, as well as PyPy and PyPy3. May be compatible with other versions (or may require tweaking - feel free to contribute!)
+Compatible with Python 2 and 3. CI builds are generated for 2.7, 3.5, 3.6, 3.7, 3.8 and 3.9, as well as PyPy3. May be compatible with other versions (or may require tweaking - feel free to contribute!)
 
 ## Running Tests
 
@@ -107,9 +114,9 @@ To run the tests:
 
 To run against a specific version of Python:
 
-`tox -e py34`
+`tox -e py39`
 
-[tox](https://tox.readthedocs.org/en/latest/index.html) is used for running tests locally against multiple versions of Python. Tests will only run against versions available to tox. 
+[tox](https://tox.wiki/en/latest/) is used for running tests locally against multiple versions of Python. Tests will only run against versions available to tox. 
 
 ## More Macaroons
 

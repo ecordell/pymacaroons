@@ -1,7 +1,5 @@
 from __future__ import unicode_literals
 
-from nose.tools import *
-
 from nacl.bindings import crypto_box_NONCEBYTES
 from pymacaroons import Macaroon, Verifier
 from pymacaroons.caveat_delegates import EncryptedFirstPartyCaveatDelegate, EncryptedFirstPartyCaveatVerifierDelegate
@@ -26,10 +24,9 @@ class TestEncryptedFieldsMacaroon(object):
         ))
         m.first_party_caveat_delegate = EncryptedFirstPartyCaveatDelegate(field_encryptor=encryptor)
         m.add_first_party_caveat('test = caveat', encrypted=True)
-        assert_equal(
-            m.signature,
+        assert\
+            m.signature ==\
             'a443bc61e8f45dca4f0c441d6cfde90b804cebb0b267aab60de1ec2ab8cc8522'
-        )
 
     def test_verify_encrypted_first_party_exact_caveats(self):
         m = Macaroon(
@@ -47,4 +44,4 @@ class TestEncryptedFieldsMacaroon(object):
             m,
             'this is our super secret key; only we should know it'
         )
-        assert_true(verified)
+        assert verified

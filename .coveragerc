@@ -1,4 +1,8 @@
 [report]
 omit =
     */python?.?/*
-    */site-packages/nose/*
+
+# do not report missing coverage for abstract methods
+exclude_lines =
+    @abstractmethod
+    @abc.abstractmethod
