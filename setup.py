@@ -22,6 +22,7 @@ setup(
     license='MIT',
     packages=find_packages(exclude=['tests', 'tests.*']),
     include_package_data=True,
+    package_data={package: ["py.typed", ".pyi", "**/.pyi"] for package in find_packages(exclude=['tests', 'tests.*'])},
     long_description=long_description,
     install_requires=[
         'six>=1.8.0',
